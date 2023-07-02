@@ -25,19 +25,19 @@ There are no additional dependencies other than core Python packages of Python 3
 The composition of the atmosphere of the Earth may serve as an example how to use isoVec.
 The constituents and their atomic (mole) fractions are taken from the respective [Wikipedia](https://en.wikipedia.org/wiki/Atmosphere_of_Earth#Composition) article and are as of April 2022:
 
-| Constituent                     | Atomic Fraction [at.%] |
+| Constituent                     | Atomic Fraction        |
 | ------------------------------- | ---------------------- |
-| Nitrogen (N<sub>2</sub>)        | 78.084                 |
-| Oxygen (O<sub>2</sub>)          | 20.946                 |
-| Argon (Ar)                      | 0.9340                 |
-| Carbon dioxide (CO<sub>2</sub>) | 0.0417                 |
-| Neon (Ne)                       | 0.001818               |
-| Helium (He)                     | 0.000524               |
-| Methane (CH<sub>4</sub>)        | 0.000187               |
-| Krypton (Kr)                    | 0.000114               |
+| Nitrogen (N<sub>2</sub>)        | 78.084 %               |
+| Oxygen (O<sub>2</sub>)          | 20.946 %               |
+| Argon (Ar)                      | 0.9340 %               |
+| Carbon dioxide (CO<sub>2</sub>) | 417 ppm                |
+| Neon (Ne)                       | 18.18 ppm              |
+| Helium (He)                     | 5.24 ppm               |
+| Methane (CH<sub>4</sub>)        | 1.87 ppm               |
+| Krypton (Kr)                    | 1.14 ppm               |
 
 Let's assume for the following that you import isoVec with the following (shorter) alias.
-Keep in mind, that all content is packed inside the isovec namespace.
+Keep in mind, that all content is packed inside the given namespace.
 
 ```python
 import isovec as iso
@@ -94,18 +94,19 @@ oxygen2 = iso.Molecule("molecular oxygen", { iso.O_nat: 2})
 ### Mixture
 
 The air is now a mixture of several molecules and pure elements, as stated in the table from the introduction.
-This `Mixture` is given by a name identifier and the composition, in this case atomic (which again doesn't necessarily need to add up):
+This `Mixture` is given by a name identifier and the composition, in this case atomic (which again doesn't necessarily need to add up).
+In the following definition, we also utilise helper functions for conversion (an extensive list ca be found in the documentation):
 
 ```python
 air = iso.Mixture("air", {
-    nitrogen2:     78.084000E-02, # Molecule
-    oxygen2:       20.946000E-02, # Molecule
-    iso.Ar_nat:     0.934000E-02, # Element
-    carbonDioxide:  0.041700E-02, # Molecule
-    iso.Ne_nat:     0.001818E-02, # Element
-    iso.He_nat:     0.000524E-02, # Element
-    methane:        0.000187E-02, # Molecule
-    iso.Kr_nat:     0.000114E-02  # Element
+    nitrogen2:     78.084000E-02,        # Molecule
+    oxygen2:       iso.percent(20.946),  # Molecule
+    iso.Ar_nat:    iso.percent( 0.9340), # Element
+    carbonDioxide: iso.ppm(417),         # Molecule
+    iso.Ne_nat:    iso.ppm( 18.18),      # Element
+    iso.He_nat:    iso.ppm(  5.24),      # Element
+    methane:       iso.ppm(  1.87),      # Molecule
+    iso.Kr_nat:    iso.ppm(  1.14)       # Element
 })
 ```
 

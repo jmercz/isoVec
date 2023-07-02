@@ -12,7 +12,7 @@ exclude = ["extension*"]
 
 [project]
 name = "isovec"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     { name="Julius Mercz", email="julius.mercz@tum.de" }
 ]
@@ -37,3 +37,4 @@ dependencies = [
 
 [project.urls]
 "PyPI" = "https://pypi.org/project/isovec/"
+"GitHub" = "https://github.com/jmercz/isoVec"
