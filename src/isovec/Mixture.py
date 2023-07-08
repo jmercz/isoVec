@@ -72,10 +72,14 @@ class Mixture:
     # Functions
     # ########
 
-    def AppendIsotopes(self, dictList: defaultdict[Isotope, list[float]] = defaultdict(list)) -> defaultdict[Isotope, list[float]]:
+    def AppendIsotopes(self, dictList: defaultdict[Isotope, list[float]] = None) -> defaultdict[Isotope, list[float]]:
         """
         Takes input dictionary and appends all isotopes with their atomic fraction from the constituents 
         """
+
+        if dictList is None:
+            dictList = defaultdict(list)  # new defaultdict should be the default value for dictList, but those are mutable and stay the same object over multiple function calls (clutter up)
+                                          # thanks to Don Cross' article: https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422
 
         for constituent, fraction in self._constituents.items():
             dictList = constituent.AppendIsotopes(dictList, fraction)

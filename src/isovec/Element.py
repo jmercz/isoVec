@@ -103,10 +103,14 @@ class Element:
 
         return atomicWeight
 
-    def AppendIsotopes(self, dictList: defaultdict[Isotope, list[float]] = defaultdict(list), topFraction: float = 1.0) -> list[dict[Isotope, float]]:
+    def AppendIsotopes(self, dictList: defaultdict[Isotope, list[float]] = None, topFraction: float = 1.0) -> list[dict[Isotope, float]]:
         """
         Takes input dictionary and appends all isotopes with their atomic fraction
         """
+
+        if dictList is None:
+            dictList = defaultdict(list)  # new defaultdict should be the default value for dictList, but those are mutable and stay the same object over multiple function calls (clutter up)
+                                          # thanks to Don Cross' article: https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422
 
         for isotope, fraction in self._isotopes.items():
             dictList[isotope].append(topFraction*fraction)
