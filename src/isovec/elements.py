@@ -1,13 +1,11 @@
 # module for element symbols and names and natural elements
 
 from .exceptions import *
-
-from .Element import Element
-
+from .element import Element
 from .isotopes import *
 
 
-numberToSymbol = {
+atom_numb_to_symbol = {
     1:   "H",
     2:   "He",
     3:   "Li",
@@ -128,7 +126,7 @@ numberToSymbol = {
     118: "Og"
 }
 
-symbolToName = {
+symbol_to_name = {
     "H":  "hydrogen",
     "He": "helium",
     "Li": "lithium",

@@ -6,59 +6,56 @@ from .exceptions import *
 
 from .Isotope import Isotope
 
-from .conversion import WtToAt, AtToWt
+from .conversion import wt_to_at, at_to_wt
 
 class Element:
 
-    def __init__(self, name: str, isotopes: dict[Isotope, float], **kwargs) -> 'Element':
-        """
-        Element object
+    def __init__(self, name: str, isotopes: dict[Isotope, float], **kwargs) -> None:
+        """Element object
 
         Optional parameters:
-          "atomicWeight": float - overwrite atomic weight of element
+          "atom_wt": float - overwrite atomic weight of element
         """
         
         self._name: str = name                     # name
-        self._atomicNumber: int                    # atomic number (protons)
+        self._atomic_num: int                        # atomic number (protons)
         self._isotopes: dict[Isotope, float] = {}  # {isotope: atomic fraction}
-        self._atomicWeight: float                  # atomic weight, weighted by (atomic) abundance of isootopes
+        self._atom_wt: float                       # atomic weight, weighted by (atomic) abundance of isootopes
 
-        if not all(fraction > 0 for fraction in isotopes.values()):
+        if not all(frac > 0 for frac in isotopes.values()):
             # either all negative or mixed
-            if all(fraction < 0 for fraction in isotopes.values()):
+            if all(frac < 0 for frac in isotopes.values()):
                 # given in terms of weight fraction
                 
                 # remove negative sign from input
-                for isotope, wtFraction in isotopes.items():
-                    isotopes[isotope] = abs(wtFraction)
+                for isotope, wt_frac in isotopes.items():
+                    isotopes[isotope] = abs(wt_frac)
 
                 # convert to atomic fraction
-                isotopes = WtToAt(isotopes)
+                isotopes = wt_to_at(isotopes)
 
             else:
                 raise FractionError(f"Element \"{self._name}\": Mixing of atomic and weight fractions is not allowed.")
 
         # set atomic number from first isotope
-        self._atomicNumber = list(isotopes.keys())[0].atomicNumber
+        self._atomic_num = list(isotopes.keys())[0].atomic_num
 
-        fractionSum = sum(isotopes.values())
-        for isotope, fraction in isotopes.items():
+        frac_sum = sum(isotopes.values())
+        for isotope, frac in isotopes.items():
             
             # check if atomic number matches
-            if isotope.atomicNumber != self._atomicNumber:
+            if isotope.atomic_num != self._atomic_num:
                 raise ValueError(f"Atomic number of all isotopes of Element \"{self._name}\" must match!")
 
-            if fraction == 0:
+            if frac == 0:
                 # not present in element
                 pass
             else:
                 # given as atomic fraction or already converted to atomic fraction
-                self._isotopes[isotope] = fraction / fractionSum # normalised
+                self._isotopes[isotope] = frac / frac_sum  # normalised
 
-        if "atomicWeight" in kwargs:
-            self._atomicWeight = kwargs["atomicWeight"]
-        else:
-            self._atomicWeight = self.CalcAtomicWeight()
+        # process kwargs
+        self._atom_wt = kwargs.get("atom_wt", self.calc_atom_wt())  # use given atomic weight or calculate
             
 
         return
@@ -71,86 +68,88 @@ class Element:
 
     @property
     def name(self):
-        """ Name of the element """
+        """Name of the element."""
         return self._name
 
     @property
-    def atomicNumber(self):
-        """ Atomic number (number of protons) """
-        return self._atomicNumber
+    def atomic_num(self):
+        """Atomic number (number of protons)."""
+        return self._atomic_num
 
     @property
     def isotopes(self):
-        """ Dictionary of isotopes and their abundance (atomic fractions) """
+        """Dictionary of isotopes and their abundance (atomic fractions)."""
         return self._isotopes
     
     @property
-    def atomicWeight(self):
-        """ Atomic weight of element, weighted by (atomic) abundance of isotopes """
-        return self._atomicWeight
+    def atom_wt(self):
+        """Atomic weight of element, weighted by (atomic) abundance of isotopes."""
+        return self._atom_wt
 
 
     # ########
     # Functions
     # ########
 
-    def CalcAtomicWeight(self) -> float:
-        """
-        Calculate atomic weight of element, weighted by (atomic) abundance of isotopes
-        """
+    def calc_atom_wt(self) -> float:
+        """Calculates atomic weight of element, weighted by (atomic) abundance of isotopes."""
 
-        atomicWeight = sum([atFrac * isotope.atomicWeight for isotope, atFrac in self._isotopes.items()])
+        atom_wt = sum([at_frac * isotope.atom_wt for isotope, at_frac in self._isotopes.items()])
 
-        return atomicWeight
+        return atom_wt
 
-    def AppendIsotopes(self, dictList: defaultdict[Isotope, list[float]] = None, topFraction: float = 1.0) -> list[dict[Isotope, float]]:
-        """
-        Takes input dictionary and appends all isotopes with their atomic fraction
-        """
+    def append_isotopes(self, dict_list: defaultdict[Isotope, list[float]] = None, top_frac: float = 1.0) -> defaultdict[Isotope, list[float]]:
+        """Appends all isotopes with their atomic fraction to given dictionary."""
 
-        if dictList is None:
-            dictList = defaultdict(list)  # new defaultdict should be the default value for dictList, but those are mutable and stay the same object over multiple function calls (clutter up)
-                                          # thanks to Don Cross' article: https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422
+        if dict_list is None:
+            dict_list = defaultdict(list)  # new defaultdict should be the default value for dict_list, but those are mutable and stay the same object over multiple function calls (clutter up)
+                                           # thanks to Don Cross' article: https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422
 
-        for isotope, fraction in self._isotopes.items():
-            dictList[isotope].append(topFraction*fraction)
+        for isotope, frac in self._isotopes.items():
+            dict_list[isotope].append(top_frac*frac)
 
-        return dictList
+        return dict_list
 
-    def GetIsotopes(self) -> dict[Isotope, float]:
-        """ Gets all isotopes with their atomic fraction from the constituents """
-        return {isotope: sum(atFractions) for isotope, atFractions in sorted(self.AppendIsotopes().items())}
+    def get_isotopes(self) -> dict[Isotope, float]:
+        """Returns dict of all contained isotopes with their summed atomic fraction."""
+        return {isotope: sum(at_fracs) for isotope, at_fracs in sorted(self.append_isotopes().items())}
+
+    def hash(self) -> int:
+        """Hashes element via name."""
+        return hash(self._name)
 
 
     # ########
     # Print
     # ########
 
-    def String(self) -> str:
-        """ Return Element as string """
+    def string(self) -> str:
+        """Returns element name as string."""
         return self._name
 
-    def PrintOverview(self, scale: bool = False, numberStr: str = "", atFrac: float = 1.0, wtFrac: float = 1.0) -> None:
-        """
-        Prints an overview of the element.
+    def print_overview(self, scale: bool = False, numbering_str: str = "", at_frac: float = 1.0, wt_frac: float = 1.0) -> None:
+        """Prints an overview of the element.
+
           scale = True - adapts the fractions of sub-components according to the fraction of the parent-component
         """
 
-        print("{0} Element \"{1}\": {2:.4f} g/mol".format(numberStr, self._name, self._atomicWeight))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numberStr), atFrac*1e2, wtFrac*1e2))
+        print("{0} Element \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._atom_wt))
+        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), at_frac*1e2, wt_frac*1e2))
         print()
 
-        dictWtFrac = AtToWt(self._isotopes)
+        # calculate weight fractions of isotopes
+        dict_wt_fracs = at_to_wt(self._isotopes)
 
-        for i, (isotope, atFraction) in enumerate(self._isotopes.items(), start = 1):
-            iStr = numberStr + str(i) + "."
-            wtFraction = dictWtFrac[isotope]
+        for i, (isotope, iso_at_frac) in enumerate(self._isotopes.items(), start = 1):
+            numbering_str += str(i) + "."  # list indention string
+            iso_wt_frac = dict_wt_fracs[isotope]
 
             if scale:
-                atFraction = atFrac * atFraction
-                wtFraction = wtFrac * wtFraction
+                # scale with parent fraction
+                iso_at_frac = at_frac * iso_at_frac
+                iso_wt_frac = wt_frac * iso_wt_frac
             
-            print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(iStr, isotope._name + ":", atFraction*1e2, wtFraction*1e2))
+            print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(numbering_str, isotope._name + ":", iso_at_frac*1e2, iso_wt_frac*1e2))
 
         return
 
@@ -161,37 +160,40 @@ class Element:
     # ########
 
     def __str__(self):
-        return self.String()
+        return self.string()
 
     def __repr__(self):
-        return self.String()
+        return self.string()
 
     def __hash__(self):
-        return hash(self._name)
+        return self.hash()
 
-    def __eq__(self, other: 'Element'):
+    def __eq__(self, other):
         try:
             return self._name == other._name
         except:
-            raise TypeError(f"Cannot compare Element with type \"{type(other)}\".")
+            #raise TypeError(f"Cannot compare Element with type \"{type(other)}\".")
+            return NotImplemented
 
-    def __ne__(self, other: 'Element'):
+    def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __lt__(self, other: 'Element'):
+    def __lt__(self, other):
         try:
-            return self._atomicNumber < other._atomicNumber
+            return self._atomic_num < other._atomic_num
         except:
-            raise TypeError(f"Cannot compare Element with type \"{type(other)}\".")
+            #raise TypeError(f"Cannot compare Element with type \"{type(other)}\".")
+            return NotImplemented
 
-    def __le__(self, other: 'Element'):
+    def __le__(self, other):
         return self.__lt__(other) or self.__eq__(other)
 
-    def __gt__(self, other: 'Element'):
+    def __gt__(self, other):
         try:
-            return self._atomicNumber > other._atomicNumber
+            return self._atomic_num > other._atomic_num
         except:
-            raise TypeError(f"Cannot compare Element with type \"{type(other)}\".")
+            #raise TypeError(f"Cannot compare Element with type \"{type(other)}\".")
+            return NotImplemented
 
-    def __ge__(self, other: 'Element'):
+    def __ge__(self, other):
         return self.__gt__(other) or self.__eq__(other)

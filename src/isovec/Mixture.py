@@ -106,7 +106,7 @@ class Mixture:
         """
         
         print()
-        print(bigSep)
+        print(big_sep)
         print()
         print("Mixture \"{0}\"".format(self._name))
         print()
@@ -117,12 +117,12 @@ class Mixture:
             iStr = str(i) + "."
             wtFraction = dictWtFrac[constituent]
             
-            print(medSep)
+            print(med_sep)
             constituent.PrintOverview(scale, iStr, atFraction, wtFraction)
 
-        print(medSep)
+        print(med_sep)
         print()
-        print(bigSep)
+        print(big_sep)
         
         return
 

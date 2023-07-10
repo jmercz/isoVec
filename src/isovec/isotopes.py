@@ -1,15 +1,15 @@
 # module with all isotopes
 
-from .Isotope import Isotope
+from .isotope import Isotope
 
 
 #   1: H  (hydrogen)
 H_1    = Isotope("H-1"   ,   1,   1, 1.00782503223)
-H      = Isotope("H"     ,   1,   1, 1.00782503223) # alias
+H      = Isotope("H"     ,   1,   1, 1.00782503223)  # alias
 H_2    = Isotope("H-2"   ,   1,   2, 2.01410177812)
-D      = Isotope("D"     ,   1,   2, 2.01410177812) # alias
+D      = Isotope("D"     ,   1,   2, 2.01410177812)  # alias
 H_3    = Isotope("H-3"   ,   1,   3, 3.0160492779)
-T      = Isotope("T"     ,   1,   3, 3.0160492779) # alias
+T      = Isotope("T"     ,   1,   3, 3.0160492779)   # alias
 
 #   2: He (helium)
 He_3   = Isotope("He-3"  ,   2,   3, 3.0160293201)

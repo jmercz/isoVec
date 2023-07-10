@@ -24,9 +24,9 @@
   <ItemGroup>
     <Compile Include="src\extension\__init__.py" />
     <Compile Include="src\isovec\Mixture.py" />
-    <Compile Include="src\isovec\Element.py" />
+    <Compile Include="src\isovec\element.py" />
     <Compile Include="src\isovec\exceptions.py" />
-    <Compile Include="src\isovec\Isotope.py" />
+    <Compile Include="src\isovec\isotope.py" />
     <Compile Include="src\extension\Material.py" />
     <Compile Include="src\isovec\Molecule.py" />
     <Compile Include="src\isovec\conversion.py" />
