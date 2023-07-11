@@ -69,12 +69,12 @@ Instead, each fraction is normalised by the total sum of given fractions.
 
 Straightforward, the composition for a molecule is the number of atoms per element.
 Therefore, only positive values for the compoosition are reasonable here.
-The atomic weight of a molecule is calculated automatically, but could be overwritten when supplying the kwargs key-value pair `atomicWeight=value` in the constructor.
+The atomic weight of a molecule is calculated automatically, but could be overwritten when supplying the kwargs key-value pair `atomic_wt=value` in the constructor.
 However, this class isn't strictly limited to molecules, but can be used for crystalline or amorphous structures with a stochiometric distribution.
 Using the implemented natural elements, the `Molecule` for carbon dioxide is given by a name identifier and the atomic composition:
 
 ```python
-carbonDioxide = iso.Molecule("carbon dioxide", {
+carbon_dioxide = iso.Molecule("carbon dioxide", {
     iso.C_nat: 1,
     iso.O_nat: 2
 })
@@ -99,21 +99,21 @@ In the following definition, we also utilise helper functions for conversion (an
 
 ```python
 air = iso.Mixture("air", {
-    nitrogen2:     78.084000E-02,        # Molecule
-    oxygen2:       iso.percent(20.946),  # Molecule
-    iso.Ar_nat:    iso.percent( 0.9340), # Element
-    carbonDioxide: iso.ppm(417),         # Molecule
-    iso.Ne_nat:    iso.ppm( 18.18),      # Element
-    iso.He_nat:    iso.ppm(  5.24),      # Element
-    methane:       iso.ppm(  1.87),      # Molecule
-    iso.Kr_nat:    iso.ppm(  1.14)       # Element
+    nitrogen2:                 78.084E-02,  # Molecule
+    oxygen2:        iso.percent(20.946),    # Molecule
+    iso.Ar_nat:     iso.percent( 0.9340),   # Element
+    carbon_dioxide:            417.0E-06,   # Molecule
+    iso.Ne_nat:        iso.ppm( 18.18),     # Element
+    iso.He_nat:        iso.ppm(  5.24),     # Element
+    methane:           iso.ppm(  1.87),     # Molecule
+    iso.Kr_nat:        iso.ppm(  1.14)      # Element
 })
 ```
 
-A printed overview of all subcomponents can be obtained by invoking `PrintOverview` ony any substance we want to inspect:
+A printed overview of all subcomponents can be obtained by invoking `print_overview` ony any substance we want to inspect:
 
 ```python
-air.PrintOverview(True)
+air.print_overview(True)
 ```
 
 which yields the following (excerpt of the) output:
@@ -121,7 +121,8 @@ which yields the following (excerpt of the) output:
 ```
 ________________________________________________________________
 
-Mixture "air"
+ Mixture "air"
+  100.0000 at.%  |  100.0000 wt.%
 
 ----------------------------------------------------------------
 1. Molecule "molecular nitrogen": 28.0134 g/mol

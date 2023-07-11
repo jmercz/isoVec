@@ -3,10 +3,9 @@
 from collections import defaultdict
 
 from .exceptions import *
+from .conversion import wt_to_at, at_to_wt, percent
 
-from .Isotope import Isotope
-
-from .conversion import wt_to_at, at_to_wt
+from .isotope import Isotope
 
 class Element:
 
@@ -14,13 +13,13 @@ class Element:
         """Element object
 
         Optional parameters:
-          "atom_wt": float - overwrite atomic weight of element
+          "atomic_wt": float - overwrite atomic weight of element
         """
         
         self._name: str = name                     # name
         self._atomic_num: int                        # atomic number (protons)
         self._isotopes: dict[Isotope, float] = {}  # {isotope: atomic fraction}
-        self._atom_wt: float                       # atomic weight, weighted by (atomic) abundance of isootopes
+        self._atomic_wt: float                       # atomic weight, weighted by (atomic) abundance of isootopes
 
         if not all(frac > 0 for frac in isotopes.values()):
             # either all negative or mixed
@@ -55,7 +54,7 @@ class Element:
                 self._isotopes[isotope] = frac / frac_sum  # normalised
 
         # process kwargs
-        self._atom_wt = kwargs.get("atom_wt", self.calc_atom_wt())  # use given atomic weight or calculate
+        self._atomic_wt = kwargs.get("atomic_wt", self.calc_atomic_wt())  # use given atomic weight or calculate
             
 
         return
@@ -82,37 +81,37 @@ class Element:
         return self._isotopes
     
     @property
-    def atom_wt(self):
+    def atomic_wt(self):
         """Atomic weight of element, weighted by (atomic) abundance of isotopes."""
-        return self._atom_wt
+        return self._atomic_wt
 
 
     # ########
     # Functions
     # ########
 
-    def calc_atom_wt(self) -> float:
+    def calc_atomic_wt(self) -> float:
         """Calculates atomic weight of element, weighted by (atomic) abundance of isotopes."""
 
-        atom_wt = sum([at_frac * isotope.atom_wt for isotope, at_frac in self._isotopes.items()])
+        atomic_wt = sum([at_frac * isotope.atomic_wt for isotope, at_frac in self._isotopes.items()])
 
-        return atom_wt
+        return atomic_wt
 
-    def append_isotopes(self, dict_list: defaultdict[Isotope, list[float]] = None, top_frac: float = 1.0) -> defaultdict[Isotope, list[float]]:
+    def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]] = None, par_at_frac: float = 1.0) -> defaultdict[Isotope, list[float]]:
         """Appends all isotopes with their atomic fraction to given dictionary."""
 
         if dict_list is None:
             dict_list = defaultdict(list)  # new defaultdict should be the default value for dict_list, but those are mutable and stay the same object over multiple function calls (clutter up)
                                            # thanks to Don Cross' article: https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422
 
-        for isotope, frac in self._isotopes.items():
-            dict_list[isotope].append(top_frac*frac)
+        for isotope, at_frac in self._isotopes.items():
+            dict_list[isotope].append(par_at_frac*at_frac)
 
         return dict_list
 
     def get_isotopes(self) -> dict[Isotope, float]:
         """Returns dict of all contained isotopes with their summed atomic fraction."""
-        return {isotope: sum(at_fracs) for isotope, at_fracs in sorted(self.append_isotopes().items())}
+        return {isotope: sum(at_fracs) for isotope, at_fracs in sorted(self._append_isotopes().items())}
 
     def hash(self) -> int:
         """Hashes element via name."""
@@ -124,32 +123,32 @@ class Element:
     # ########
 
     def string(self) -> str:
-        """Returns element name as string."""
+        """Returns element name."""
         return self._name
 
-    def print_overview(self, scale: bool = False, numbering_str: str = "", at_frac: float = 1.0, wt_frac: float = 1.0) -> None:
+    def print_overview(self, scale: bool = False, numbering_str: str = "", par_at_frac: float = 1.0, par_wt_frac: float = 1.0) -> None:
         """Prints an overview of the element.
 
           scale = True - adapts the fractions of sub-components according to the fraction of the parent-component
         """
 
-        print("{0} Element \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._atom_wt))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), at_frac*1e2, wt_frac*1e2))
+        print("{0} Element \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._atomic_wt))
+        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), par_at_frac*1e2, par_wt_frac*1e2))
         print()
 
         # calculate weight fractions of isotopes
-        dict_wt_fracs = at_to_wt(self._isotopes)
+        wt_fracs = at_to_wt(self._isotopes)
 
         for i, (isotope, iso_at_frac) in enumerate(self._isotopes.items(), start = 1):
-            numbering_str += str(i) + "."  # list indention string
-            iso_wt_frac = dict_wt_fracs[isotope]
+            cur_num_str = numbering_str + str(i) + "."  # list indention string
+            iso_wt_frac = wt_fracs[isotope]
 
             if scale:
                 # scale with parent fraction
-                iso_at_frac = at_frac * iso_at_frac
-                iso_wt_frac = wt_frac * iso_wt_frac
+                iso_at_frac = par_at_frac * iso_at_frac
+                iso_wt_frac = par_wt_frac * iso_wt_frac
             
-            print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(numbering_str, isotope._name + ":", iso_at_frac*1e2, iso_wt_frac*1e2))
+            print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(cur_num_str, isotope._name + ":", iso_at_frac*1e2, iso_wt_frac*1e2))
 
         return
 

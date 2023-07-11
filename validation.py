@@ -8,19 +8,22 @@ if __name__ == "__main__":
     ###################
     ### Ni80Cr20
     ###################
-    # test conversion from weight to atom percent
-    # as in https://www.plasmaterials.com/converting-atomic-percent-to-weight-percent-and-vice-versa/
-    # Alloy of 80 wt.% Nickel and 20 wt.% Chromium
+    desc = """
+    test conversion from weight to atom percent
+    as in https://www.plasmaterials.com/converting-atomic-percent-to-weight-percent-and-vice-versa/
+    Alloy of 80 wt.% Nickel and 20 wt.% Chromium
+    """
 
     print()
     print("Ni80Cr20 Test Case")
-    print()
+    print(desc)
 
     ## hand calculation
 
     # conversion formula given on webpage
     atPercX = lambda wtPercX, atWtX, wtPercY, atWtY: (wtPercX/atWtX) / ((wtPercX/atWtX) + (wtPercY/atWtY)) * 100
     print()
+    print("Expected results:")
     print(f"Nickel:   {atPercX(80, 58.71, 20, 51.99):.4f} at.%")
     print(f"Chromium: {atPercX(20, 51.99, 80, 58.71):.4f} at.%")
     print()
@@ -41,7 +44,7 @@ if __name__ == "__main__":
         nickel:   -80e-2,
         chromium: -20e-2
     })
-    Ni80Cr20.PrintOverview(True)
+    Ni80Cr20.print_overview(True)
 
 
 
@@ -51,16 +54,19 @@ if __name__ == "__main__":
     ###################
     ### Fe-7wt%C
     ###################
-    # test conversion from weight to atom percent
-    # as in https://www.southampton.ac.uk/~pasr1/g7.htm
-    # Alloy of 93 wt.% Iron and 7 wt.% Carbon
+    desc = """
+    test conversion from weight to atom percent
+    as in https://www.southampton.ac.uk/~pasr1/g7.htm
+    Alloy of 93 wt.% Iron and 7 wt.% Carbon
+    """
 
     print()
     print("Fe-7wt%C Test Case")
-    print()
+    print(desc)
 
     print()
-    print(f"Carbon: 26 at.%")
+    print("Expected results:")
+    print("Carbon: 26 at.%")
     print()
 
     print(30*"#")
@@ -70,7 +76,7 @@ if __name__ == "__main__":
         iso.Fe_nat: -93e-2,
         iso.C_nat:   -7e-2
     })
-    Fe7C.PrintOverview(True)
+    Fe7C.print_overview(True)
 
 
 
@@ -80,16 +86,19 @@ if __name__ == "__main__":
     ###################
     ### Fe-25at%C
     ###################
-    # test conversion from atom to weight percent
-    # as in https://www.southampton.ac.uk/~pasr1/g7.htm
-    # Alloy of 75 at.% Iron and 25 at.% Carbon
+    desc = """
+    test conversion from atom to weight percent
+    as in https://www.southampton.ac.uk/~pasr1/g7.htm
+    Alloy of 75 at.% Iron and 25 at.% Carbon
+    """
 
     print()
     print("Fe-25at%C Test Case")
-    print()
+    print(desc)
 
     print()
-    print(f"Carbon: 6.66 wt.%")
+    print("Expected results:")
+    print("Carbon: 6.66 wt.%")
     print()
 
     print(30*"#")
@@ -99,7 +108,7 @@ if __name__ == "__main__":
         iso.Fe_nat: 75e-2,
         iso.C_nat:  25e-2
     })
-    Fe25C.PrintOverview(True)
+    Fe25C.print_overview(True)
 
 
 
@@ -109,17 +118,20 @@ if __name__ == "__main__":
     ###################
     ### 98 g Sn - 65 g Pb
     ###################
-    # test conversion from weight to atom percent
-    # as in https://www.youtube.com/watch?v=0otCqXjZkOw
-    # Alloy of 98 g tin and 65 g lead
+    desc = """
+    test conversion from weight to atom percent
+    as in https://www.youtube.com/watch?v=0otCqXjZkOw
+    Alloy of 98 g tin and 65 g lead
+    """
 
     print()
     print("98 g Sn - 65 g Pb Test Case")
-    print()
+    print(desc)
 
     print()
-    print(f"Tin:  72.47 at.%")
-    print(f"Lead: 27.53 at.%")
+    print("Expected results:")
+    print("Tin:  72.47 at.%")
+    print("Lead: 27.53 at.%")
     print()
 
     print(30*"#")
@@ -132,10 +144,12 @@ if __name__ == "__main__":
         iso.Sn_nat: -m_tin/m_tot,
         iso.Pb_nat: -m_lead/m_tot
     })
-    SnPb.PrintOverview(True)
+    SnPb.print_overview(True)
 
+    print()
+    print("Alloy calculated by script with masses entered directly (shows normalisation):")
     SnPb2 = iso.Mixture("Sn(98)Pb(65)_direct", {
         iso.Sn_nat: -98,
         iso.Pb_nat: -65
     })
-    SnPb2.PrintOverview(True)
+    SnPb2.print_overview(True)

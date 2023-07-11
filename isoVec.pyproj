@@ -23,12 +23,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="src\extension\__init__.py" />
-    <Compile Include="src\isovec\Mixture.py" />
+    <Compile Include="src\isovec\mixture.py" />
     <Compile Include="src\isovec\element.py" />
     <Compile Include="src\isovec\exceptions.py" />
     <Compile Include="src\isovec\isotope.py" />
     <Compile Include="src\extension\Material.py" />
-    <Compile Include="src\isovec\Molecule.py" />
+    <Compile Include="src\isovec\molecule.py" />
     <Compile Include="src\isovec\conversion.py" />
     <Compile Include="src\isovec\elements.py" />
     <Compile Include="src\isovec\isotopes.py" />

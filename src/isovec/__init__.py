@@ -1,8 +1,8 @@
 
 from .isotope  import Isotope
 from .element  import Element
-from .Molecule import Molecule
-from .Mixture  import Mixture
+from .molecule import Molecule
+from .mixture  import Mixture
 
 from .isotopes import *
 from .elements import *
