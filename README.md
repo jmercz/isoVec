@@ -11,7 +11,8 @@ A thorough example is given in Section Example.
 
 ## Installation
 
-The source code and binary installers are currently only available on the project site on the [Python Package Index (PyPI)](https://pypi.org/project/isovec) and can be simply installed from the repository via
+The source code of the most recent development version is hosted on [GitHub](https://github.com/jmercz/isoVec).
+The binary installers and the source code of stable releases is available on the project site on the [Python Package Index (PyPI)](https://pypi.org/project/isovec) and can be simply installed from the repository via
 
 ```sh
 pip install isovec
@@ -110,7 +111,7 @@ air = iso.Mixture("air", {
 })
 ```
 
-A printed overview of all subcomponents can be obtained by invoking `print_overview` ony any substance we want to inspect:
+A printed overview of all subcomponents can be obtained by invoking `print_overview()` ony any substance we want to inspect:
 
 ```python
 air.print_overview(True)
@@ -179,13 +180,13 @@ If not scaled, the fractions will only sum up on their respective layer, for exa
 ### Isotope Composition
 
 As can be seen above, this doesn't sum up the fractions for the single isotopes, something we might be interested in.
-The method `GetIsotopes()` can be called upon every component and yields an ordered dictionary with the isotopes and their respective summed atomic fractions.
+The method `get_isotopes()` can be called upon every component and yields an ordered dictionary with the isotopes and their respective summed atomic fractions.
 For our mixture of air, the following code
 
 ```python
-isotopeVector = air.GetIsotopes()
-for isotope, atFrac in isotopeVector.items():
-    print(f"{isotope.name:>6}: {atFrac:.4E}")
+isotope_vector = air.get_isotopes()
+for isotope, at_frac in isotope_vector.items():
+    print(f"{isotope.name:>6}: {at_frac:.4E}")
 ```
 
 yields the final isotope vector:
@@ -208,7 +209,7 @@ yields the final isotope vector:
 
 ## Changelog
 
-For a history of changes, refer to the file `CHANGELOG.md` in the source distribution available under "Navigation/Download files".
+For a history of changes, refer to the file `CHANGELOG.md` in the source code distributions or directly on the [GitHub repository](https://github.com/jmercz/isoVec/blob/main/README.md).
 
 ## References
 

@@ -12,7 +12,7 @@ exclude = ["extension*"]
 
 [project]
 name = "isovec"
-version = "1.0.2dev"
+version = "1.0.2"
 authors = [
     { name="Julius Mercz", email="julius.mercz@tum.de" }
 ]

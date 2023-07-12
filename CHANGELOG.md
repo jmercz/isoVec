@@ -14,7 +14,7 @@ Presumably, changes for users will be limited to the `PrintOverview` method (now
 - fixed a bug, when `get_isotopes` is called sequentially
 	- the dictionary would unintentionally clutter up with isotopes from former calls
 	- since dictionaries are mutable objects and Python compiles functions (and thus their default values) at the beginning, the very same dictionary is used every call, even though an empty one should be created
-	- this beahviour is described nicley in an [article by Don Cross](https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422)
+	- this beahviour is described nicely in an [article by Don Cross](https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422)
 
 ## Version 1.0.1 (20/06/2023)
 
