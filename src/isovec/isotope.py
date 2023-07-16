@@ -1,13 +1,21 @@
 # Python class for isotope
 
+from .constants import ATOM_NUMB_TO_SYMBOL, M_u
+
 class Isotope:
 
-    def __init__(self, name: str, atomic_num: int, mass_num: int, atomic_wt: float) -> None:
+    def __init__(self, Z: int, A: int, A_r: float, name: str = "") -> None:
         
-        self._name: str = name          # name
-        self._atomic_num: int = atomic_num  # atomic number (protons)
-        self._mass_num: int = mass_num  # (atomic) mass number (protons + neutrons)
-        self._atomic_wt: float = atomic_wt  # atomic weight
+        self._Z: int = Z        # atomic number (protons)
+        self._A: int = A        # mass number (protons + neutrons)
+        self._A_r: float = A_r  # relative atomic mass (atomic weight) [-]
+        self._name: str         # name
+
+        if name == "":
+            self._name = ATOM_NUMB_TO_SYMBOL[self._Z] + "-" + str(self._A)
+        else:
+            self._name = name
+
 
     # ########
     # Getter
@@ -19,32 +27,46 @@ class Isotope:
         return self._name
 
     @property
-    def atomic_num(self):
+    def Z(self):
         """Atomic number (number of protons)."""
-        return self._atomic_num
+        return self._Z
 
     @property
-    def mass_num(self):
-        """(Atomic) Mass number (number of protons + neutrons)."""
-        return self._mass_num
+    def A(self):
+        """Mass number (number of protons + neutrons)."""
+        return self._A
 
     @property
-    def atomic_wt(self):
+    def A_r(self):
         """Atomic weight of the isotope."""
-        return self._atomic_wt
+        return self._A_r
+
+    @property
+    def M(self):
+        """Molar mass [g mol^-1] of the isotope."""
+        return self.calc_molar_mass()
+
+    @property
+    def N(self):
+        """Neutron number (number of neutrons)."""
+        return self.calc_neutron_number()
 
 
     # ########
     # Functions
     # ########
 
-    def neutron_number(self) -> int:
+    def calc_molar_mass(self) -> float:
+        """Calculates molar mass [g mol^-1] of the isotope."""
+        return self._A_r * M_u
+    
+    def calc_neutron_number(self) -> int:
         """Calculates neutron number (number of neutrons)."""
-        return self._mass_num - self._atomic_num
+        return self._A - self._Z
 
     def hash(self) -> int:
         """Hashes isotope via atomic and mass number."""
-        return hash((self._atomic_num, self._mass_num))
+        return hash((self._Z, self._A))
 
 
     # ########
@@ -71,12 +93,11 @@ class Isotope:
 
     def __eq__(self, other):
         try:
-            if (self._atomic_num == other._atomic_num) and (self._mass_num == other._mass_num):
+            if (self._Z == other._Z) and (self._A == other._A):
                 return True
             else:
                 return False
         except:
-            #raise TypeError(f"Cannot compare Isotope with type \"{type(other)}\".")
             return NotImplemented
 
     def __ne__(self, other):
@@ -84,17 +105,16 @@ class Isotope:
 
     def __lt__(self, other):
         try:
-            if self._atomic_num < other._atomic_num:
+            if self._Z < other._Z:
                 return True
-            elif self._atomic_num == other._atomic_num:
-                if self._mass_num < other._mass_num:
+            elif self._Z == other._Z:
+                if self._A < other._A:
                     return True
                 else:
                     return False
             else:
                 return False
         except:
-            #raise TypeError(f"Cannot compare Isotope with type \"{type(other)}\".")
             return NotImplemented
 
     def __le__(self, other):
@@ -103,17 +123,16 @@ class Isotope:
 
     def __gt__(self, other):
         try:
-            if self._atomic_num > other._atomic_num:
+            if self._Z > other._Z:
                 return True
-            elif self._atomic_num == other._atomic_num:
-                if self._mass_num > other._mass_num:
+            elif self._Z == other._Z:
+                if self._A > other._A:
                     return True
                 else:
                     return False
             else:
                 return False
         except:
-            #raise TypeError(f"Cannot compare Isotope with type \"{type(other)}\".")
             return NotImplemented
 
     def __ge__(self, other):
