@@ -37,13 +37,13 @@ class Element:
                 raise FractionError(f"Element \"{self._name}\": Mixing of atomic and weight fractions is not allowed.")
 
         # set atomic number from first isotope
-        self._atomic_num = list(isotopes.keys())[0].atomic_num
+        self._atomic_num = list(isotopes.keys())[0].Z
 
         frac_sum = sum(isotopes.values())
         for isotope, frac in isotopes.items():
             
             # check if atomic number matches
-            if isotope.atomic_num != self._atomic_num:
+            if isotope.Z != self._atomic_num:
                 raise ValueError(f"Atomic number of all isotopes of Element \"{self._name}\" must match!")
 
             if frac == 0:
@@ -93,7 +93,7 @@ class Element:
     def calc_atomic_wt(self) -> float:
         """Calculates atomic weight of element, weighted by (atomic) abundance of isotopes."""
 
-        atomic_wt = sum([at_frac * isotope.atomic_wt for isotope, at_frac in self._isotopes.items()])
+        atomic_wt = sum([at_frac * isotope.M for isotope, at_frac in self._isotopes.items()])
 
         return atomic_wt
 

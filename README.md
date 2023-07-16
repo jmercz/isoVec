@@ -37,6 +37,11 @@ The constituents and their atomic (mole) fractions are taken from the respective
 | Methane (CH<sub>4</sub>)        | 1.87 ppm               |
 | Krypton (Kr)                    | 1.14 ppm               |
 
+It may be noted, that these values are often given as a volume fraction in other literature.
+For a mixture of ideal gases (which is the case for air), volume and atomic fractions are equal.
+Furthermore the amount of substance (mole) and number of particles (e.g. atoms) are proportional, being connected via the Avogadro constant.
+Thus, atomic and mole fractions are used interchangeably in the following.
+
 Let's assume for the following that you import isoVec with the following (shorter) alias.
 Keep in mind, that all content is packed inside the given namespace.
 
