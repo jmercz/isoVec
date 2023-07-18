@@ -1,6 +1,6 @@
 # Python class for molecule, made of elements
 
-from .printer import *
+from .tree import sma_sep
 
 from .substance import Substance
 from .element import Element

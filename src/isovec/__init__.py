@@ -11,5 +11,3 @@ from .conversion import *
 
 
 # DEBUG
-
-from .substance import Substance

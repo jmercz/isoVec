@@ -3,8 +3,7 @@
 from typing import Union, TypeAlias
 from collections import defaultdict
 
-from .exceptions import *
-from .printer import *
+from .tree import med_sep, big_sep
 from .conversion import wt_to_at, at_to_wt, percent
 
 from .substance import Substance
