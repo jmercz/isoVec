@@ -1,9 +1,9 @@
 # Python class for isotope
 
 from __future__ import annotations
-from collections import defaultdict
 
 from .constants import ATOM_NUMB_TO_SYMBOL, M_u
+
 
 class Isotope:
 
@@ -41,7 +41,7 @@ class Isotope:
 
     @property
     def A_r(self):
-        """Atomic weight of the isotope."""
+        """Relative atomic mass (atomic weight) [-] of the isotope."""
         return self._A_r
 
     @property
@@ -61,33 +61,16 @@ class Isotope:
 
     def calc_M(self) -> float:
         """Calculates molar mass [g mol^-1] of the isotope."""
-        return self._A_r * M_u
+        return self._A_r * M_u * 1e+03
     
     def calc_N(self) -> int:
         """Calculates neutron number (number of neutrons)."""
         return self._A - self._Z
 
-    def hash(self) -> int:
-        """Hashes isotope via atomic and mass number."""
-        return hash((self._Z, self._A))
-
-
-    # ########
-    # Isotope Collection
-    # ########
-
-    def _append_isotopes2(self, dict_list: defaultdict[Isotope, list[float]], x_i: float) -> None:
-        """Appends isotope with its atomic (mole) fraction to given dictionary."""
-        dict_list[self].append(x_i)
-
 
     # ########
     # Print
     # ########
-
-    def string(self) -> str:
-        """Returns isotope name."""
-        return self._name
 
 
     # ########
@@ -95,13 +78,13 @@ class Isotope:
     # ########
 
     def __str__(self):
-        return self.string()
+        return self._name
 
     def __repr__(self):
-        return self.string()
+        return f"{self.__class__.__name__} \"{self._name}\""
 
     def __hash__(self):
-        return self.hash()
+        return hash((self._Z, self._A))
 
     def __eq__(self, other):
         try:

@@ -12,4 +12,4 @@ from .conversion import *
 
 # DEBUG
 
-from .substance import Substance, TestClass
+from .substance import Substance

@@ -6,7 +6,7 @@ For interpreting the LaTeX equations, https://quicklatex.com/ could be used for 
 # to weight fractions (w_i)
 
 def at_to_wt(at_fracs: list[float], molar_masses: list[float]) -> list[float]:
-    """Converts atomic fractions to weight fractions.
+    r"""Converts atomic fractions to weight fractions.
     
         $$w_i = \frac{x_i \cdot M_i}{\sum_{z=1}^{Z} \left( x_z \cdot M_z \right)}$$
     """
@@ -29,7 +29,7 @@ def at_to_wt(at_fracs: list[float], molar_masses: list[float]) -> list[float]:
         raise ValueError(f"Lists of weight fractions and molar masses must have the same length.")
 
 def vol_to_wt(vol_fracs: list[float], densities: list[float]) -> list[float]:
-    """Converts volume fractions to weight fractions.
+    r"""Converts volume fractions to weight fractions.
     
         $$w_i = \frac{\phi_i \cdot \rho_i}{\sum_{z=1}^{Z} \left( \phi_z \cdot \rho_z \right)}$$
     """
@@ -55,7 +55,7 @@ def vol_to_wt(vol_fracs: list[float], densities: list[float]) -> list[float]:
 # to atomic (mole) fractions (x_i)
 
 def wt_to_at(wt_fracs: list[float], molar_masses: list[float]) -> list[float]:
-    """Converts weight fractions to atomic (mole) fractions.
+    r"""Converts weight fractions to atomic (mole) fractions.
     
         $$x_i = \frac{w_i / M_i}{\sum_{z=1}^{Z} \left( w_z / M_z \right)}$$
     """
@@ -78,7 +78,7 @@ def wt_to_at(wt_fracs: list[float], molar_masses: list[float]) -> list[float]:
         raise ValueError(f"Lists of weight fractions and molar masses must have the same length.")
 
 def vol_to_at(vol_fracs: list[float], molar_volumes: list[float]) -> float:
-    """Converts volume fractions to atomic (mole) fractions.
+    r"""Converts volume fractions to atomic (mole) fractions.
 
         $$x_i = \frac{\varphi_i / V_{\mathrm{m},i}}{\sum_{z=1}^{Z} \left( \varphi_z / V_{\mathrm{m},z} \right)}
               = \frac{\varphi_i \cdot \rho_i / M_i}{\sum_{z=1}^{Z} \left( \varphi_z \cdot \rho_z / M_z \right)}$$
@@ -105,7 +105,7 @@ def vol_to_at(vol_fracs: list[float], molar_volumes: list[float]) -> float:
 # to volume fractions (phi_i)
 
 def wt_to_vol(wt_fracs: list[float], densities: list[float]) -> list[float]:
-    """Converts weight fractions to volume fractions.
+    r"""Converts weight fractions to volume fractions.
     
         $$\varphi_i = \frac{w_i / \rho_i}{\sum_{z=1}^{Z} \left( w_z / \rho_z \right)}$$
     """
@@ -128,7 +128,7 @@ def wt_to_vol(wt_fracs: list[float], densities: list[float]) -> list[float]:
         raise ValueError(f"Lists of weight fractions and densities must have the same length.")
 
 def at_to_vol(at_fracs: list[float], molar_volumes: list[float]) -> list[float]:
-    """Converts atomic fractions to volume fractions.
+    r"""Converts atomic fractions to volume fractions.
     
         $$\varphi_i = \frac{x_i \cdot V_{\mathrm{m},i}}{\sum_{z=1}^{Z} \left( x_z \cdot V_{\mathrm{m},z} \right)}
                     = \frac{x_i \cdot M_i / \rho_i}{\sum_{z=1}^{Z} \left( x_z \cdot M_z / \rho_z \right)}$$
@@ -159,23 +159,23 @@ def at_to_vol(at_fracs: list[float], molar_volumes: list[float]) -> list[float]:
 def percent(value: float):
     """Converts value from percent."""
     return value*1e-2
-perc = percent # function alias
-pc   = percent # function alias
+perc = percent  # function alias
+pc   = percent  # function alias
 
 def permille(value: float):
     """Converts value from per mille."""
     return value*1e-3
-pm = permille # function alias
+pm = permille  # function alias
 
 def permyriad(value: float):
     """Converts value from per myriad."""
     return value*1e-4
-bp = permyriad # function alias
+bp = permyriad  # function alias
 
 def percentmille(value: float):
     """Converts value from per cent mille."""
     return value*1e-5
-pcm = percentmille # function alias
+pcm = percentmille  # function alias
 
 def ppm(value: float):
     """Converts value from parts per million."""

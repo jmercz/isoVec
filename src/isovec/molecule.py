@@ -1,152 +1,92 @@
 # Python class for molecule, made of elements
 
-from collections import defaultdict
-
-from .exceptions import *
 from .printer import *
-from .conversion import wt_to_at, at_to_wt, percent
 
-from .isotope import Isotope
+from .substance import Substance
 from .element import Element
 
-class Molecule:
+
+class Molecule(Substance):
+
+    # override
+    #_ALLOWED_CLASSES = (Element,)
+    @classmethod
+    def _GET_ALLOWED_CLASSES(cls):
+        """Returns a tuple of allowed classes for constituents."""
+        return (Element,)
+
+    def __init__(self, name: str, elements: dict[Element, float], mode: str = "_legacy", **kwargs) -> None:
+
+        self._atoms: int = int(sum(elements.values()))  # number of atoms in molecule
+
+        super().__init__(name=name, constituents=elements, mode=mode, kwargs=kwargs)
+        
+    # override
+    @classmethod
+    def _inp_constituents_weight(cls, inp_constituents: dict[Element, float]) -> dict[Element, float]:
+        raise ValueError(f"Input mode 'weight' is disabled for {cls.__name__} creation.")
     
-    def __init__(self, name: str, elements: dict[Element, int], **kwargs) -> None:
+    # override
+    @classmethod
+    def _inp_constituents_volume(cls, inp_constituents: dict[Element, float]) -> dict[Element, float]:
+        raise ValueError(f"Input mode 'volume' is disabled for {cls.__name__} creation.")
 
-        self._name: str = name                              # name
-        self._elements: dict[Element, int] = {}             # {element: atoms}
-        self._elementsFractions: dict[Element, float] = {}  # {element: atomic fraction}
-        self._atoms: int                                    # number of atoms
-        self._atomic_wt: float                              # atomic weight, weighted by (atomic) abundance of isotopes
-
-        if not all(atoms > 0 for atoms in elements.values()):
-            # either all negative or mixed
-            if all(atoms < 0 for atoms in elements.values()):
-                # given in terms of weight
-                raise FractionError(f"Molecule \"{self._name}\": Giving weight fractions is not allowed for molecules.")
-
-            else:
-                # mixed
-                raise FractionError(f"Molecule \"{self._name}\": Mixing of atomic and weight fractions is not allowed.")
-        else:
-            # given in terms of atoms, no action needed
-            pass
-
-        self._atoms = int(sum(elements.values()))
-        for element, element_atoms in elements.items():
-            
-            if element_atoms == 0:
-                # not present in molecule
-                pass
-            else:
-                # given as atoms
-                self._elements[element] = element_atoms  # not normalised
-                self._elementsFractions[element] = element_atoms / self._atoms  # normalised
-
-        if "atomic_wt" in kwargs:
-            self._atomic_wt = kwargs["atomic_wt"]
-        else:
-            self._atomic_wt = self.calc_atomic_wt()
-
-        return
-
-
-    # ########
-    # Getter
-    # ########
-
-    @property
-    def name(self):
-        """Name of the molecule."""
-        return self._name
-
-    @property
-    def elements(self):
-        """Dictionary of elements."""
-        return self._elements
-
-    @property
-    def elementsFractions(self):
-        """Dictionary of fractions of elements."""
-        return self._elementsFractions
+    # override
+    @classmethod
+    def _inp_constituents_legacy(cls, inp_constituents: dict[Element, float]) -> dict[Element, float]:
+        
+        if not all(frac > 0 for frac in inp_constituents.values()):  # either all negative or mixed
+            if all(frac < 0 for frac in inp_constituents.values()):  # all negative -> weight fractions given, need to be converted
+                raise ValueError(f"Could not create {cls.__name__}: Giving weight fractions is not allowed for molecules..")
+            else:  # mixed, not allowed
+                raise ValueError(f"Could not create {cls.__name__}: Mixing of atomic and weight fractions is not allowed.")
+        else:  # all positive -> atomic fractions given, no action needed
+            return inp_constituents
 
     @property
     def atoms(self):
         """Number of atoms in the molecule."""
         return self._atoms
-
+    
     @property
-    def atomic_wt(self):
-        """Atomic weight of element, weighted by (atomic) abundance of isotopes."""
-        return self._atomic_wt
-
-
-    # ########
-    # Functions
-    # ########
-
-    def calc_atomic_wt(self) -> float:
-        """Calculates atomic weight of molecule, weighted by number of atoms per element."""
+    def constituent_atoms(self):
+        """Dictionary with constituents and their number of atoms in the molecule."""
+        return {constituent: int(x_i*self._atoms) for constituent, x_i in self._constituents.items()}
+    
+    # override
+    def _calc_M(self) -> float:
+        """Calculates molar mass of the molecule.
         
-        atomic_wt = sum([element_atoms * element.atomic_wt for element, element_atoms in self._elements.items()])
-
-        return atomic_wt
-
-    def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]] = None, par_at_frac: float = 1.0) -> list[dict[Isotope, float]]:
-        """Appends all isotopes with their atomic fraction to given dictionary."""
-
-        if dict_list is None:
-            dict_list = defaultdict(list)  # new defaultdict should be the default value for dict_list, but those are mutable and stay the same object over multiple function calls (clutter up)
-                                           # thanks to Don Cross' article: https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422
-        for element, at_frac in self._elementsFractions.items():
-            dict_list = element._append_isotopes(dict_list, par_at_frac*at_frac)
-
-        return dict_list
-
-    def get_isotopes(self) -> dict[Isotope, float]:
-        """Returns dict of all contained isotopes with their summed atomic fraction."""
-        return {isotope: sum(at_fracs) for isotope, at_fracs in sorted(self._append_isotopes().items())}
+        The molar masses of all constituents are multiplied by their number of atoms in the molecule and summed up:
+            $$\overline{M} = \sum_i \left( N_i \cdot M_i \right)$$
+        Will return zero if calculation is not possible.
+        """
+        if all(constituent.M > 0 for constituent in self._constituents.keys()):
+            return sum(N_i*constituent.M for constituent, N_i in self.constituent_atoms.items())
+        else:
+            return 0.0
 
 
-    # ########
-    # Print
-    # ########
-
-    def string(self) -> str:
-        """Returns molecule name."""
-        return self._name
-
-    def print_overview(self, scale: bool = False, numbering_str: str = "", par_at_frac: float = 1.0, par_wt_frac: float = 1.0) -> None:
+    def print_overview(self, scale: bool = False, numbering_str: str = "", x_p: float = 1.0, w_p: float = 1.0) -> None:
         """Prints an overview of the molecule.
 
           scale = True - adapts the fractions of sub-components according to the fraction of the parent-component
         """
 
-        print("{0} Molecule \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._atomic_wt))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), par_at_frac*1e2, par_wt_frac*1e2))
+        print("{0} Molecule \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
+        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
 
-        wt_fracs = at_to_wt(self._elementsFractions)
+        wt_constituents = self.get_constituents_in_wt()
         
-        for i, (element, ele_at_frac) in enumerate(self._elementsFractions.items(), start = 1):
+        for i, (element, x_i) in enumerate(self._constituents.items(), start = 1):
             cur_num_str = numbering_str + str(i) + "."  # list indention string
-            ele_wt_frac = wt_fracs[element]
+            w_i = wt_constituents[element]
 
             if scale:
-                ele_at_frac = par_at_frac * ele_at_frac
-                ele_wt_frac = par_wt_frac * ele_wt_frac
+                x_i = x_p * x_i
+                w_i = w_p * w_i
             
             print(sma_sep)
-            element.print_overview(scale, cur_num_str, ele_at_frac, ele_wt_frac)
+            element.print_overview(scale, cur_num_str, x_i, w_i)
 
         return
-
-
-    # ########
-    # Operators
-    # ########
-
-    def __str__(self):
-        return self.string()
-
-    def __repr__(self):
-        return self.string()
