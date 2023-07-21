@@ -1,12 +1,7 @@
 # module for element symbols and names and natural elements
 
-from .exceptions import *
 from .element import Element
 from .isotopes import *
-
-
-
-
 
 
 # ################

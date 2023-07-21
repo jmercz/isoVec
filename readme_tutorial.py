@@ -7,10 +7,12 @@ nitrogen = iso.Element("nitrogen", {
     iso.N_15: 3.640000E-03
 })
 
+
 carbon_dioxide = iso.Molecule("carbon dioxide", {
     iso.C_nat: 1,
     iso.O_nat: 2
 })
+
 methane = iso.Molecule("methane", {
     iso.C_nat: 1,
     iso.H_nat: 4
@@ -35,6 +37,4 @@ isotope_vector = air.get_isotopes()
 for isotope, at_frac in isotope_vector.items():
     print(f"{isotope.name:>6}: {at_frac:.4E}")
 
-
-
-print("Done")
+tree = air.make_tree(weight=True, align_isotopes=True).print()

@@ -27,6 +27,26 @@ class Mixture(Substance):
 
         super().__init__(name=name, constituents=constituents, mode=mode, kwargs=kwargs)
 
+        if self._rho == 0.0:
+            self._calc_rho()
+
+    def _calc_rho(self) -> float:
+        r"""Calculates average density of the mixture.
+        
+        The densities of all constituents are weighted by their weight fraction, summed up and inversed:
+            $$\overline{\rho} = \left( \sum_i \frac{w_i}{\rho_i} \right)^{-1}$$
+        Will return zero if calculation is not possible.
+        """
+        if all(constituent.M > 0 for constituent in self._constituents.keys()):
+            wt_constituents = self.get_constituents_in_wt()
+        else:
+            return 0.0
+
+        if all(constituent.rho > 0 for constituent in wt_constituents.keys()):
+            summed = sum(w_i / constituent.rho for constituent, w_i in wt_constituents.items())
+            return summed**-1
+        else:
+            return 0.0
 
     def print_overview(self, scale: bool = False, numbering_str: str = "", x_p: float = 1.0, w_p: float = 1.0) -> None:
         """Prints an overview of the mixture.

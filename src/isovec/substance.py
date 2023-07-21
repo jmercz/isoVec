@@ -6,6 +6,7 @@ from abc import ABCMeta, abstractmethod
 
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
 from .isotope import Isotope
+from .tree import Node, Tree
 
 
 Constituent: TypeAlias = Union["Substance", Isotope]
@@ -178,25 +179,6 @@ class Substance(metaclass=ABCMeta):
         else:
             return 0.0
 
-    def _calc_rho(self) -> float:
-        r"""Calculates average density of the mixture.
-        
-        The densities of all constituents are weighted by their weight fraction, summed up and inversed:
-            $$\overline{\rho} = \left( \sum_i \frac{w_i}{\rho_i} \right)^{-1}$$
-        Will return zero if calculation is not possible.
-        """
-        return 0.0
-        if all(constituent.has_M() for constituent in self._constituents.keys()):
-            wt_constituents = self.convert_to_wt()
-        else:
-            return 0.0
-
-        if all(constituent.has_rho() for constituent in wt_constituents.keys()):
-            summed = sum(w_i / constituent.rho for constituent, w_i in wt_constituents.items())
-            return summed**-1
-        else:
-            return 0.0
-
     def _calc_V_m(self) -> float:
         r"""Calculates molar volume of the substance.
         Molar mass is divided by density:
@@ -246,6 +228,79 @@ class Substance(metaclass=ABCMeta):
         """Returns dict of all contained isotopes with their summed atomic (mole) fraction."""
         return {isotope: sum(at_fracs) for isotope, at_fracs in sorted(self._append_isotopes(defaultdict(list)).items())}
 
+
+    # ########
+    # Tree
+    # ########        
+
+    def make_node(self, atomic: bool = True, weight: bool = False, volume: bool = False, 
+                  scale: bool = True, align_isotopes: bool = True) -> Node:
+        """Creates a node from substance, including its constituents."""
+
+        def add_constituents(parent_node: Node, x_p: float = 1.0, w_p: float = 1.0, phi_p: float = 1.0):
+
+            x_i, w_i, phi_i = 0.0, 0.0, 0.0
+
+            substance: Substance = parent_node.content
+            constituents = list(substance.constituents.keys())
+
+            # decide for fraction to be used
+            if atomic:
+                at_fracs = list(substance._constituents.values())
+            if weight:
+                wt_fracs = list(substance.get_constituents_in_wt().values())
+            if volume:
+                vol_fracs = list(substance.get_constituents_in_vol().values())
+
+            for i, constituent in enumerate(constituents):
+                
+                # create data dictionary
+                constituent_data = {}
+                if atomic:
+                    x_i = at_fracs[i] * x_p if scale else at_fracs[i]
+                    constituent_data["x"] = x_i
+                if weight:
+                    w_i = wt_fracs[i] * w_p if scale else wt_fracs[i]
+                    constituent_data["w"] = w_i
+                if volume:
+                    phi_i = vol_fracs[i] * phi_p if scale else vol_fracs[i]
+                    constituent_data["phi"] = phi_i
+                if constituent.M:
+                    constituent_data["M"] = constituent.M
+                try:
+                    if constituent.rho:
+                        constituent_data["rho"] = constituent.rho
+                except AttributeError as ex:
+                    pass
+
+                # create node of constituent
+                node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data)
+
+                # create child node for constituents of constituents (if applicable)
+                if isinstance(constituent, Isotope):
+                    if align_isotopes:
+                        node.align_right()
+                else:
+                    add_constituents(parent_node=node, x_p=x_i, w_p=w_i, phi_p=phi_i)
+
+        # create data dictionary
+        root_data = {}
+        if self._M:
+            root_data["M"] = self._M
+        if self._rho:
+            root_data["rho"] = self._rho
+
+        root = Node(label=str(self), content=self, data=root_data)
+        add_constituents(parent_node=root)
+
+        return root
+
+
+    def make_tree(self, atomic: bool = True, weight: bool = False, volume: bool = False,
+                  align_isotopes: bool = True) -> Tree:
+        """Creates a tree of nodes from substance."""
+        return Tree(self.make_node(atomic, weight, volume, align_isotopes))
+        
 
     # ########
     # Functions
