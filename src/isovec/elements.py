@@ -1,4 +1,9 @@
-# module for element symbols and names and natural elements
+"""Library of naturally occuring elements.
+
+Each naturally occuring element is generated with its natural composition and
+can be accessed as a variable with the name `SYMBOL_nat`. The `natural` flag
+enables the calculation of elemental compositions during isotope gathering.
+"""
 
 from .element import Element
 from .isotopes import *
