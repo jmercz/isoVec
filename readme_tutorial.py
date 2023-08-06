@@ -33,8 +33,16 @@ air = iso.Mixture("air", {
 })
 air.print_overview(True)
 
-isotope_vector = air.get_isotopes()
+isotope_vector = air.get_isotopes(use_natural=False)
 for isotope, at_frac in isotope_vector.items():
-    print(f"{isotope.name:>6}: {at_frac:.4E}")
+    print(f"{isotope.name:>6}: {at_frac*1e2:.4f} at.%")
 
-tree = air.make_tree(weight=True, align_isotopes=True).print()
+print()
+isotope_vector_wt = air.get_isotopes(mode="weight", use_natural=False)
+for isotope, wt_frac in isotope_vector_wt.items():
+    print(f"{isotope.name:>6}: {wt_frac*1e2:.4f} wt.%")
+
+print()
+tree = air.print_tree(weight=True, align_isotopes=True)
+print()
+

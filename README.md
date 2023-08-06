@@ -3,7 +3,7 @@
 ## Description
 
 isoVec is a framework to build complex mixtures, get atomic or weight percentages of each of its substances down to the isotopic composition (the isotopce vector, hence the name).
-The information on atomic weight, as well as abundance of those isotopes in natural occuring elements, is from "*Atomic Weights and Isotopic Compositions*" by the NIST Physical Measurement Laboratory [1].
+The information on atomic weight, as well as abundance of those isotopes in natural occuring elements, is from "*Atomic Weights and Isotopic Compositions with Relative Atomic Masses*" by the NIST Physical Measurement Laboratory [1].
 This information is given in the form of `Isotope` and `Element` classes.
 The user can create custom elements and specify the isotopic composition manually. `Element`s make up `Molecule`s and `Element`s and `Molecule`s can make up a `Mixture`.
 A thorough example is given in Section Example.
@@ -218,4 +218,4 @@ For a history of changes, refer to the file `CHANGELOG.md` in the source code di
 
 ## References
 
-1. Coursey, J.S., Schwab, D.J., Tsai, J.J., and Dragoset, R.A. (2015), Atomic Weights and Isotopic Compositions (version 4.1). [Online] Available: http://physics.nist.gov/Comp [Accessed 23 November 2022]. National Institute of Standards and Technology, Gaithersburg, MD.
+1. Coursey, J.S., Schwab, D.J., Tsai, J.J., and Dragoset, R.A. (2015), Atomic Weights and Isotopic Compositions (version 4.1). [Online] Available: https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses [Accessed 23 July 2023]. National Institute of Standards and Technology, Gaithersburg, MD.

@@ -1,12 +1,12 @@
 
 from __future__ import annotations
 from collections import defaultdict
-from typing import Any, TypeAlias, Union
+from typing import Any, TypeAlias, Union, Literal
 from abc import ABCMeta, abstractmethod
 
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
 from .isotope import Isotope
-from .tree import Node, Tree
+from .node import Node
 
 
 Constituent: TypeAlias = Union["Substance", Isotope]
@@ -29,11 +29,12 @@ class Substance(metaclass=ABCMeta):
         self._constituents: dict[Constituent, float]  # {constituent: atomic (mole) fraction abundance}
         self._M: float                                # molar mass [g mol^-1]
         self._rho: float                              # density [g cm^-3]
+        self._symbol: str                             # symbol of the substance
 
         # ensure input constituents are of allowed classes
         for constituent in constituents.keys():
             if not self.instance_is_allowed(constituent):
-                type_names = ", ".join(t.__name__ for t in self._ALLOWED_CLASSES)
+                type_names = ", ".join(t.__name__ for t in self._GET_ALLOWED_CLASSES())
                 raise ValueError(f"Could not create {self.__class__.__name__} object with type {constituent.__class__.__name__} as constituent.\n"
                                  + f"Valid classes for {self.__class__.__name__} constituents: {type_names}.")
 
@@ -61,6 +62,7 @@ class Substance(metaclass=ABCMeta):
         # get molar mass and density from kwargs or calculate it
         self._M = kwargs.get("M", self._calc_M())
         self._rho = kwargs.get("rho", 0.0)
+        self._symbol = kwargs.get("symbol", "")
     
     @classmethod
     def _inp_constituents_atomic(cls, inp_constituents: dict[Constituent, float]) -> dict[Constituent, float]:
@@ -157,6 +159,11 @@ class Substance(metaclass=ABCMeta):
         return self._rho
 
     @property
+    def symbol(self):
+        """Symbol of the substance."""
+        return self._symbol
+
+    @property
     def V_m(self):
         """Molar volume [cm^3 mol^-1] of the substance."""
         return self._calc_V_m()
@@ -218,16 +225,26 @@ class Substance(metaclass=ABCMeta):
     # Isotope Collection
     # ########
 
-    def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]], x_p: float = 1.0) -> defaultdict[Isotope, list[float]]:
+    def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]], by_weight: bool = False, f_p: float = 1.0, use_natural: bool = False) -> defaultdict[Isotope, list[float]]:
         """Appends all isotopes with their atomic (mole) fraction to given dictionary."""
-        for constituent, x_i in self._constituents.items():
-            constituent._append_isotopes(dict_list, x_p*x_i)
+        if not by_weight:
+            constituents = self._constituents
+        else:
+            constituents = self.get_constituents_in_wt()        
+        for constituent, f_i in constituents.items():
+            constituent._append_isotopes(dict_list, by_weight, f_p*f_i, use_natural)
         return dict_list
-
-    def get_isotopes(self) -> dict[Isotope, float]:
+ 
+    def get_isotopes(self, mode: Literal["atomic", "weight"] = "atomic", use_natural: bool = False) -> dict[Isotope, float]:
         """Returns dict of all contained isotopes with their summed atomic (mole) fraction."""
-        return {isotope: sum(at_fracs) for isotope, at_fracs in sorted(self._append_isotopes(defaultdict(list)).items())}
-
+        if mode in {"atomic", "at", "mole", "mol"}:
+            gathered_isotopes = self._append_isotopes(defaultdict(list), by_weight=False, use_natural=use_natural)
+        elif mode in {"weight", "wt"}:
+            gathered_isotopes = self._append_isotopes(defaultdict(list), by_weight=True, use_natural=use_natural)
+        else:
+            raise ValueError(f"Mode \"{mode}\" not supported for gathering isotopes.")
+        return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
+        
 
     # ########
     # Tree
@@ -296,10 +313,10 @@ class Substance(metaclass=ABCMeta):
         return root
 
 
-    def make_tree(self, atomic: bool = True, weight: bool = False, volume: bool = False,
-                  align_isotopes: bool = True) -> Tree:
+    def print_tree(self, atomic: bool = True, weight: bool = False, volume: bool = False,
+                  align_isotopes: bool = True) -> None:
         """Creates a tree of nodes from substance."""
-        return Tree(self.make_node(atomic, weight, volume, align_isotopes))
+        self.make_node(atomic, weight, volume, align_isotopes).print_tree()
         
 
     # ########

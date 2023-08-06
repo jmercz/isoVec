@@ -124,7 +124,7 @@ ATOM_NUMB_TO_SYMBOL = {
     118: "Og"
 }
 
-symbol_to_name = {
+SYMBOL_TO_NAME = {
     "H":  "hydrogen",
     "He": "helium",
     "Li": "lithium",

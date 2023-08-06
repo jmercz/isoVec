@@ -3,7 +3,7 @@
 from typing import Union, TypeAlias
 from collections import defaultdict
 
-from .tree import med_sep, big_sep
+from .node import med_sep, big_sep
 from .conversion import wt_to_at, at_to_wt, percent
 
 from .substance import Substance
@@ -23,12 +23,12 @@ class Mixture(Substance):
         """Returns a tuple of allowed classes for constituents."""
         return (Mixture, Molecule, Element)
     
-    def __init__(self, name: str, constituents: dict[Isotope, float], mode: str = "_legacy", **kwargs) -> None:
+    def __init__(self, name: str, constituents: dict[Constituent, float], mode: str = "_legacy", **kwargs) -> None:
 
-        super().__init__(name=name, constituents=constituents, mode=mode, kwargs=kwargs)
+        super().__init__(name=name, constituents=constituents, mode=mode, **kwargs)
 
         if self._rho == 0.0:
-            self._calc_rho()
+            self._rho = self._calc_rho()
 
     def _calc_rho(self) -> float:
         r"""Calculates average density of the mixture.

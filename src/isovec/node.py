@@ -148,6 +148,10 @@ class Node:
                  depth += 1
                  cur_parent = cur_parent._parent
             return depth
+    
+    def max_depth(self) -> int:
+        """Returns maximal depth of node structure."""
+        return max(node.depth for node in self)
         
     def _append_to(self, collection: list[Node]) -> None:
         """Append itself and children to list of nodes."""
@@ -156,55 +160,25 @@ class Node:
         for child in self._children:
             child._append_to(collection)
 
+    def get_nodes_by_label(self, target: str) -> list[Node]:
+        """Returns all nodes, which label equals target."""
+        found = []
+        for node in self:
+            if node._label == target:
+                found.append(node)
+        return found
 
-    def __str__(self) -> str:
-        return f"{self._label}"
-    
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__} of \"{repr(self._content)}\""
-    
-    def __eq__(self, other) -> bool:
-        if type(self) is type(other):
-            return self._id == other._id
-        else:
-            return NotImplemented
-    
-    def __hash__(self) -> int:
-        return hash((self.__class__, self._id))
-    
-    def __iter__(self):
-        for child in self._children:
-            yield child
+    def get_nodes_by_content(self, target: Content) -> list[Node]:
+        """Returns all nodes, which content equals target."""
+        found = []
+        for node in self:
+            if node._content == target:
+                found.append(node)
+        return found
 
 
-class Tree:
-    
-    def __init__(self, root: Node) -> None:
-        
-        self._root = root
-        self._max_depth = self.count_max_depth()
-
-    
-
-
-    def flat(self) -> list[Node]:
-
-        flat_list = []
-        self._root._append_to(flat_list)
-
-        return flat_list
-
-
-    def count_max_depth(self) -> int:
-
-        return max(node.depth for node in self.flat())
-
-
-    
-        
-
-
-    def print(self) -> None:
+    def print_tree(self) -> None:
+        """Prints node structure as tree."""
 
         def print_node(node: Node):
 
@@ -215,7 +189,7 @@ class Tree:
                     pre += node_lines["empty"] if last else node_lines["vert"]
                 pre += node_lines["last"] if last_ones[node.depth-1] else node_lines["inter"]
             if node._right_align:  # align at max depth
-                pre = pre.rstrip() + (self._max_depth-node.depth)*node_lines["fill"] + " "
+                pre = pre.rstrip() + (max_depth-node.depth)*node_lines["fill"] + " "
 
             # construct data string
             data_str = []
@@ -244,9 +218,31 @@ class Tree:
                     last_ones[node._depth] = True
                 print_node(node._children[-1])
 
-        last_ones = [False for i in range(self._max_depth)]
-        print_node(self._root)
+        max_depth = self.max_depth()
+        last_ones = [False for i in range(max_depth)]
+        print_node(self)
 
+    def __str__(self) -> str:
+        return f"{self._label}"
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__} of \"{repr(self._content)}\""
+    
+    def __eq__(self, other) -> bool:
+        if type(self) is type(other):
+            return self._id == other._id
+        else:
+            return NotImplemented
+    
+    def __hash__(self) -> int:
+        return hash((self.__class__, self._id))
+    
+    def __iter__(self):
+        if self.is_root():
+            yield self
+        for child in self._children:
+            yield child
+            yield from child.__iter__()
         
 
 

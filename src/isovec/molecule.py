@@ -1,6 +1,6 @@
 # Python class for molecule, made of elements
 
-from .tree import sma_sep
+from .node import sma_sep
 
 from .substance import Substance
 from .element import Element
@@ -19,7 +19,7 @@ class Molecule(Substance):
 
         self._atoms: int = int(sum(elements.values()))  # number of atoms in molecule
 
-        super().__init__(name=name, constituents=elements, mode=mode, kwargs=kwargs)
+        super().__init__(name=name, constituents=elements, mode=mode, **kwargs)
         
     # override
     @classmethod

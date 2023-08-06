@@ -1,6 +1,17 @@
 
 # Changelog
 
+## Version 1.1.0 ()
+
+- A_r for `Isotope`; molar mass M is calculated via molar mass constant (according to 2019 redefinitions)
+- added all isotopes from NIST database
+- Substance base class for maintainability
+- ZAI for `Isotope`
+- Natural flag for `Element`
+- volume mode for mixture
+- tree structure
+- `get_isotopes` with optional `mode` weight and `use_natural` for elemental composition (for natural elements)
+
 ## Version 1.0.2 (12/07/2023)
 
 The whole source code was adjusted to the PEP 8 Style Guide for Python Code.

@@ -53,6 +53,11 @@ class Isotope:
     def N(self):
         """Neutron number (number of neutrons)."""
         return self.calc_N()
+    
+    @property
+    def ZA(self):
+        """ZA notation of the isotope with atomic and three digit mass number."""
+        return self.ZA_notation()
 
 
     # ########
@@ -66,6 +71,13 @@ class Isotope:
     def calc_N(self) -> int:
         """Calculates neutron number (number of neutrons)."""
         return self._A - self._Z
+    
+    def ZA_notation(self) -> int:
+        """Returns the ZA notation of the isotope.
+        
+        The mass number is written as a 3 digit number.
+        """
+        return int(f"{self._Z}{self._A:03}")
 
 
     # ########
