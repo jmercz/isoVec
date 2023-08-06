@@ -1,3 +1,9 @@
+"""Physical constants and element mappings.
+
+Physical constants for calculations with mole.
+Mappings of atomic number to element symbol and element symbol to element name.
+"""
+
 
 N_A = 6.02214076E+23  # Avogadro constant [mol^-1]
 
