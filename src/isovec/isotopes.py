@@ -2,7 +2,11 @@
 
 Each isotope is created with atomic nubmer, mass number and its relative atomic
 mass and can be accessed as a variable with the name `SYMBOL_MASSNUMBER`.
-Hydrogen-1 to -3 have their respective aliases. 
+Hydrogen-1 to -3 have their respective aliases.
+
+
+Data for relative atmoic mass was obtained from:
+https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses
 """
 
 from .isotope import Isotope
