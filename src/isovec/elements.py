@@ -3,6 +3,9 @@
 Each naturally occuring element is generated with its natural composition and
 can be accessed as a variable with the name `SYMBOL_nat`. The `natural` flag
 enables the calculation of elemental compositions during isotope gathering.
+
+Data for natural composition was obtained from:
+https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses
 """
 
 from .element import Element

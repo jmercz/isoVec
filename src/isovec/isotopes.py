@@ -1,4 +1,9 @@
-# module with all isotopes
+"""Library of all isotopes.
+
+Each isotope is created with atomic nubmer, mass number and its relative atomic
+mass and can be accessed as a variable with the name `SYMBOL_MASSNUMBER`.
+Hydrogen-1 to -3 have their respective aliases. 
+"""
 
 from .isotope import Isotope
 
