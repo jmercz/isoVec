@@ -1,7 +1,7 @@
 """Class for Substance.
 
-Substance class serves as the (abstract) base class for Element, Molecule and
-Mixture.
+Substance class serves as the (abstract) base class for `Element`, `Molecule` and
+`Mixture`.
 """
 
 from __future__ import annotations
@@ -66,8 +66,8 @@ class Substance(metaclass=ABCMeta):
                 Short symbol.
 
         Raises:
-            ValueError: If unknown constructor mode or given constituent is not
-                allowed as constituent of substance.
+            ValueError: If non-valid constructor mode or given constituent is
+            not allowed as constituent of substance.
         """
 
         self._name = name                             # name of the substance
@@ -398,6 +398,21 @@ class Substance(metaclass=ABCMeta):
         
 
     # ########
+    # Functions
+    # ########
+
+    @classmethod
+    def instance_is_allowed(cls, instance: Any) -> bool:
+        """Returns, if given instane is of an allowed class (or subclass)."""
+        return isinstance(instance, cls._get_allowed_classes())
+    
+    @classmethod
+    def type_is_allowed(cls, type: type) -> bool:
+        """Returns, if given type is an allowed class."""
+        return all(type is allowed for allowed in cls._get_allowed_classes())
+
+
+    # ########
     # Tree
     # ########        
 
@@ -502,21 +517,6 @@ class Substance(metaclass=ABCMeta):
                 Flag to align all isotopes in one column.
         """
         self.make_node(atomic, weight, volume, scale, align_isotopes).print_tree()
-        
-
-    # ########
-    # Functions
-    # ########
-
-    @classmethod
-    def instance_is_allowed(cls, instance: Any) -> bool:
-        """Returns, if given instane is of an allowed class (or subclass)."""
-        return isinstance(instance, cls._get_allowed_classes())
-    
-    @classmethod
-    def type_is_allowed(cls, type: type) -> bool:
-        """Returns, if given type is an allowed class."""
-        return all(type is allowed for allowed in cls._get_allowed_classes())
 
 
     # ########

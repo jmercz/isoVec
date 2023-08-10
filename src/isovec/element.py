@@ -1,4 +1,7 @@
-# Python class for element, made of isotopes
+"""Class for Element
+
+Element class serves as constituents for Molecule
+"""
 
 from collections import defaultdict
 
@@ -10,15 +13,50 @@ from .constants import ATOM_NUMB_TO_SYMBOL
 
 
 class Element(Substance):
+    """A substance containing only isotopes with the same atomic number.
+
+    An element shares its properties with its parent class `Substance`, with
+    the exception that constituents can only be isotopes and therefore has a
+    well-defined atomic number itself. An element can be flagged as a natural
+    element, indicating the natural abundance of its isotopes. 
+    """
 
     # override
-    #_ALLOWED_CLASSES = (Isotope,)
     @classmethod
-    def _GET_ALLOWED_CLASSES(cls):
-        """Returns a tuple of allowed classes for constituents."""
+    def _get_allowed_classes(cls):
         return (Isotope,)
 
     def __init__(self, name: str, isotopes: dict[Isotope, float], mode: str = "_legacy", natural: bool = False, **kwargs) -> None:
+        """Constructor of substance.
+        
+        Args:
+            name:
+                Descriptive name.
+            isotopes:
+                Dictionary that maps an isotope of the element to its
+                fraction. The fractions are physically interpreted according
+                to the given mode. Values are normalsied and don't need to add
+                up to unity.
+            mode:
+                Fractions in isotopes can be interpreted as atomic or weight
+                fractions. The default value allows inputs as before 1.1.0, 
+                where positive fractions refer to atomic and negative fractions
+                to weight.
+            **kwargs:
+                Keyword arguments to override values.
+        
+        Keyword Args:
+            M (float):
+                Set molar mass.
+            rho (float):
+                Set density.
+            symbol (str):
+                Short symbol.
+
+        Raises:
+            ValueError: If non-valid constructor mode or given constituent is
+            not an isotope.
+        """
 
         super().__init__(name=name, constituents=isotopes, mode=mode, **kwargs)
 
@@ -29,9 +67,9 @@ class Element(Substance):
         if not all(self._Z == isotope.Z for isotope in isotopes.keys()):
             raise ValueError(f"Atomic number of all isotopes of {self.__class__.__name__} \"{self._name}\" must match!")
         
-        # search for symbol
-        if self._symbol == "":
+        if not self._symbol:
             self._symbol = ATOM_NUMB_TO_SYMBOL[self._Z]
+        
 
     # override
     @classmethod
@@ -85,17 +123,27 @@ class Element(Substance):
             for isotope, f_i in constituents.items():
                 dict_list[isotope].append(f_p*f_i)
         return dict_list
-    
+
 
     # ########
     # Print
     # ########
 
-    def print_overview(self, scale: bool = False, numbering_str: str = "", x_p: float = 1.0, w_p: float = 1.0) -> None:
+    def print_overview(self, scale: bool = False, **kwargs) -> None:
         """Prints an overview of the element.
 
-          scale = True - adapts the fractions of sub-components according to the fraction of the parent-component
+        Args:
+            scale:
+                Adapts the fractions of sub-components according to the fraction
+                of the parent-component.
+            **kwargs:
+                Internal dictionary to pass information down recursive calls.
         """
+
+        # get data from kwargs
+        numbering_str = kwargs.get("numbering_str", "")
+        x_p = kwargs.get("x_p", 1.0)
+        w_p = kwargs.get("w_p", 1.0)
 
         print("{0} Element \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
         print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
@@ -114,5 +162,3 @@ class Element(Substance):
                 w_i = w_p * w_i
             
             print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(cur_num_str, isotope._name + ":", x_i*1e2, w_i*1e2))
-
-        return
