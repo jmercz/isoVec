@@ -1,25 +1,68 @@
-# Python class for molecule, made of elements
+"""Class for Molecule
 
-from .node import sma_sep
+Molecule class serves as constituents for `Mixture`.
+"""
 
 from .substance import Substance
 from .element import Element
+from .node import sma_sep
 
 
 class Molecule(Substance):
+    """A substance containing at least two atoms, potentially from different elements.
+
+    A molecule shares its properties with its parent class `Substance`, with
+    the exception that constituents can only be elements. The distribution of
+    constituents can be expressed as fractions or in integers.
+    """
 
     # override
-    #_ALLOWED_CLASSES = (Element,)
     @classmethod
-    def _GET_ALLOWED_CLASSES(cls):
-        """Returns a tuple of allowed classes for constituents."""
+    def _get_allowed_classes(cls):
         return (Element,)
 
     def __init__(self, name: str, elements: dict[Element, float], mode: str = "_legacy", **kwargs) -> None:
+        """Constructor of molecule.
+        
+        Args:
+            name:
+                Descriptive name.
+            elements:
+                Dictionary that maps an element of the molecule to its atomic
+                fraction or number of atoms. Values are normalsied and don't
+                need to add up to unity.
+            mode:
+                Fractions in elements can be interpreted only as atomic
+                fractions or number of atoms. The default value allows inputs
+                as before 1.1.0.
+            **kwargs:
+                Keyword arguments to override values.
+        
+        Keyword Args:
+            M (float):
+                Set molar mass.
+            rho (float):
+                Set density.
+            symbol (str):
+                Short symbol.
+
+        Raises:
+            ValueError: If non-valid constructor mode or given constituent is
+            not an element.
+        """
 
         self._atoms: int = int(sum(elements.values()))  # number of atoms in molecule
 
         super().__init__(name=name, constituents=elements, mode=mode, **kwargs)
+
+        # construct symbol
+        if not self._symbol:
+            sym = ""
+            for element, atoms in self.constituent_atoms.items():
+                sym += f"{element.element_symbol()}"
+                if atoms > 1:
+                    sym += f"{atoms:.2g}"
+            self._symbol = sym
         
     # override
     @classmethod
@@ -43,6 +86,11 @@ class Molecule(Substance):
         else:  # all positive -> atomic fractions given, no action needed
             return inp_constituents
 
+
+    # ########
+    # Properties
+    # ########
+
     @property
     def atoms(self):
         """Number of atoms in the molecule."""
@@ -53,11 +101,17 @@ class Molecule(Substance):
         """Dictionary with constituents and their number of atoms in the molecule."""
         return {constituent: int(x_i*self._atoms) for constituent, x_i in self._constituents.items()}
     
+
+    # ########
+    # Quantity Calculation
+    # ########
+
     # override
     def _calc_M(self) -> float:
-        """Calculates molar mass of the molecule.
+        r"""Calculates molar mass.
         
-        The molar masses of all constituents are multiplied by their number of atoms in the molecule and summed up:
+        The molar masses of all constituents are multiplied by their number of
+        atoms in the molecule and summed up:
             $$\overline{M} = \sum_i \left( N_i \cdot M_i \right)$$
         Will return zero if calculation is not possible.
         """
@@ -67,11 +121,25 @@ class Molecule(Substance):
             return 0.0
 
 
-    def print_overview(self, scale: bool = False, numbering_str: str = "", x_p: float = 1.0, w_p: float = 1.0) -> None:
+    # ########
+    # Print
+    # ########
+
+    def print_overview(self, scale: bool = False, **kwargs) -> None:
         """Prints an overview of the molecule.
 
-          scale = True - adapts the fractions of sub-components according to the fraction of the parent-component
+        Args:
+            scale:
+                Adapts the fractions of sub-components according to the fraction
+                of the parent-component.
+            **kwargs:
+                Internal dictionary to pass information down recursive calls.
         """
+
+        # get data from kwargs
+        numbering_str = kwargs.get("numbering_str", "")
+        x_p = kwargs.get("x_p", 1.0)
+        w_p = kwargs.get("w_p", 1.0)
 
         print("{0} Molecule \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
         print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
@@ -87,6 +155,4 @@ class Molecule(Substance):
                 w_i = w_p * w_i
             
             print(sma_sep)
-            element.print_overview(scale, cur_num_str, x_i, w_i)
-
-        return
+            element.print_overview(scale, numbering_str=cur_num_str, x_p=x_i, w_p=w_i)

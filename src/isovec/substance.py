@@ -284,7 +284,8 @@ class Substance(metaclass=ABCMeta):
     def _calc_M(self) -> float:
         r"""Calculates average molar mass of the substance.
         
-        The molar masses of all constituents are weighted by their atomic fraction and summed up:
+        The molar masses of all constituents are weighted by their atomic
+        fraction and summed up:
             $$\overline{M} = \sum_i \left( x_i \cdot M_i \right)$$
         Will return zero if calculation is not possible.
         """

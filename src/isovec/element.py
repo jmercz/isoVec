@@ -1,6 +1,6 @@
 """Class for Element
 
-Element class serves as constituents for Molecule
+Element class serves as constituents for `Molecule`.
 """
 
 from collections import defaultdict
@@ -8,7 +8,6 @@ from collections import defaultdict
 from .substance import Substance
 from .isotope import Isotope
 from .isotopes import _natural_compositions
-
 from .constants import ATOM_NUMB_TO_SYMBOL
 
 
@@ -27,7 +26,7 @@ class Element(Substance):
         return (Isotope,)
 
     def __init__(self, name: str, isotopes: dict[Isotope, float], mode: str = "_legacy", natural: bool = False, **kwargs) -> None:
-        """Constructor of substance.
+        """Constructor of element.
         
         Args:
             name:
@@ -67,8 +66,9 @@ class Element(Substance):
         if not all(self._Z == isotope.Z for isotope in isotopes.keys()):
             raise ValueError(f"Atomic number of all isotopes of {self.__class__.__name__} \"{self._name}\" must match!")
         
+        # construct symbol
         if not self._symbol:
-            self._symbol = ATOM_NUMB_TO_SYMBOL[self._Z]
+            self._symbol = self.element_symbol()
         
 
     # override
@@ -99,7 +99,8 @@ class Element(Substance):
     def _calc_A_r(self) -> float:
         r"""Calculates relative atomic mass (atomic weight) [-] of the element.
         
-        The relative atomic masses of all isotopes are weighted by their atomic fraction and summed up:
+        The relative atomic masses of all isotopes are weighted by their atomic
+         fraction and summed up:
             $$\overline{M} = \sum_i \left( x_i \cdot A_\mathrm{r},i \right)$$
         """
         return sum(x_i*constituent.M for constituent, x_i in self._constituents.items())
@@ -111,10 +112,12 @@ class Element(Substance):
 
     # override
     def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]], by_weight: bool = False, f_p: float = 1.0, use_natural: bool = False) -> defaultdict[Isotope, list[float]]:
+        
         if not by_weight:
             constituents = self._constituents
         else:
-            constituents = self.get_constituents_in_wt() 
+            constituents = self.get_constituents_in_wt()
+
         if use_natural and self._is_natural:
             natural_isotope = _natural_compositions[self._Z]
             f_i = sum(constituents.values())
@@ -122,7 +125,17 @@ class Element(Substance):
         else:
             for isotope, f_i in constituents.items():
                 dict_list[isotope].append(f_p*f_i)
+
         return dict_list
+
+
+    # ########
+    # Functions
+    # ########
+
+    def element_symbol(self) -> str:
+        """Returns the element symbol as a string."""
+        return ATOM_NUMB_TO_SYMBOL[self._Z]
 
 
     # ########

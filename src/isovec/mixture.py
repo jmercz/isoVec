@@ -1,34 +1,73 @@
-# Python class for mixture, made of elements or compounds
+"""Class for Mixture.
+
+Mixture class is the top class, but may serve as a constituent for itself.
+"""
 
 from typing import Union, TypeAlias
-from collections import defaultdict
-
-from .node import med_sep, big_sep
-from .conversion import wt_to_at, at_to_wt, percent
 
 from .substance import Substance
-from .isotope import Isotope
 from .element import Element
 from .molecule import Molecule
+from .node import med_sep, big_sep
 
 
 Constituent: TypeAlias = Union["Mixture", Molecule, Element]
 
 class Mixture(Substance):
+    """A substance made of elements, molecules or other mixtures.
+
+    A molecule shares its properties with its parent class `Substance`.
+    Furthermore, it is possible to calculate the density of a mixture, as long
+    as all its constituents have a specified density.
+    """
 
     # override
-    #_ALLOWED_CLASSES = (Constituent,)
     @classmethod
-    def _GET_ALLOWED_CLASSES(cls):
-        """Returns a tuple of allowed classes for constituents."""
+    def _get_allowed_classes(cls):
         return (Mixture, Molecule, Element)
     
     def __init__(self, name: str, constituents: dict[Constituent, float], mode: str = "_legacy", **kwargs) -> None:
+        """Constructor of mixture.
+        
+        Args:
+            name:
+                Descriptive name.
+            constituents:
+                Dictionary that maps a constituent of the mixture to its
+                fraction. The fractions are physically interpreted according
+                to the given mode. Values are normalsied and don't need to add
+                up to unity.
+            mode:
+                Fractions in constituents can be interpreted as atomic, weight
+                or volumetric fractions. Volumetric is only valid, if all 
+                constituents have a density. The default value allows inputs
+                as before 1.1.0, where positive fractions refer to atomic and 
+                negative fractions to weight.
+            **kwargs:
+                Keyword arguments to override values.
+        
+        Keyword Args:
+            M (float):
+                Set molar mass.
+            rho (float):
+                Set density.
+            symbol (str):
+                Short symbol.
+
+        Raises:
+            ValueError: If non-valid constructor mode or given constituent is
+            not a substance.
+        """
 
         super().__init__(name=name, constituents=constituents, mode=mode, **kwargs)
 
         if self._rho == 0.0:
             self._rho = self._calc_rho()
+
+
+    # ########
+    # Quantity Calculation
+    # ########
 
     def _calc_rho(self) -> float:
         r"""Calculates average density of the mixture.
@@ -48,11 +87,26 @@ class Mixture(Substance):
         else:
             return 0.0
 
-    def print_overview(self, scale: bool = False, numbering_str: str = "", x_p: float = 1.0, w_p: float = 1.0) -> None:
+
+    # ########
+    # Print
+    # ########
+
+    def print_overview(self, scale: bool = False, **kwargs) -> None:
         """Prints an overview of the mixture.
 
-          scale = True - adapts the fractions of sub-components according to the fraction of the parent-component
+        Args:
+            scale:
+                Adapts the fractions of sub-components according to the fraction
+                of the parent-component.
+            **kwargs:
+                Internal dictionary to pass information down recursive calls.
         """
+
+        # get data from kwargs
+        numbering_str = kwargs.get("numbering_str", "")
+        x_p = kwargs.get("x_p", 1.0)
+        w_p = kwargs.get("w_p", 1.0)
         
         print()
         print(big_sep)
@@ -73,10 +127,9 @@ class Mixture(Substance):
                 w_i = w_p * w_i
             
             print(med_sep)
-            constituent.print_overview(scale, cur_num_str, x_i, w_i)
+            constituent.print_overview(scale, numbering_str=cur_num_str, x_p=x_i, w_p=w_i)
 
         print(med_sep)
         print()
         print(big_sep)
         
-        return
