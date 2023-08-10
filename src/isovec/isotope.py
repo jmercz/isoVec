@@ -1,4 +1,4 @@
-"""Class for Isotope
+"""Class for Isotope.
 
 Isotope class serves as constituent for Element class.
 """
@@ -13,7 +13,9 @@ class Isotope:
 
     Each isotope is characterised by their atomic number (Z), mass number (M)
     and isomeric state (I). Furthermore, each isotope has a chracteristic 
-    relative atomic mass (A_R). They are used to compose elements.
+    relative atomic mass (A_R). They are used to compose elements. A name can
+    be given, otherwise a name is build from the symbol of the corresponding
+    element and the mass number of the isotope.
     """
 
     def __init__(self, Z: int, A: int, A_r: float, I: int = 0, name: str = "") -> None:
@@ -167,7 +169,7 @@ class Isotope:
         return f"{self.__class__.__name__} \"{self._name}\""
 
     def __hash__(self):
-        return hash((self._Z, self._A, self._I))
+        return hash((self.__class__, self._Z, self._A, self._I))
 
     def __eq__(self, other):
         try:
