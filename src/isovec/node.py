@@ -1,30 +1,97 @@
+"""Contains classes for Node, its helper classes and legacy seperator strings.
+
+The Node class is used to create tree structures of `Substance` objects.
+The TreeCharSet class is a helper class to streamline different line styles in
+the printing routine of `Node`. `big_sep`, `med_sep` and `sma_sep` are used in
+legacy printing routines of `Element`, `Molecule` and `Mixture`.
+"""
 
 from __future__ import annotations
-from typing import TypeAlias, Any, Union, TypeVar
+
+from typing import TypeAlias, Any, Union, TypeVar, Literal
 from collections.abc import Iterable
+from dataclasses import dataclass
 
-c_ver = "\u2502"
-c_int = "\u251c"
-c_hor = "\u2500"
-c_ang = "\u2514"
-node_lines = {
-    "inter": c_int + 2*c_hor + " ",
-    "last":  c_ang + 2*c_hor + " ",
-    "fill":  4*c_hor,
-    "vert":  c_ver + 3*" ",
-    "empty": 4*" ",
+
+@dataclass(frozen=True)
+class TreeCharSet:
+    """Class for tree structure line ploting of class Node.
+    
+    It contains a set of characters for vertical lines, intersection lines,
+    horizontal lines and angled lines (used for the last element of each level).
+    """
+
+    c_ver: str  # character vertical
+    c_int: str  # character intersection
+    c_hor: str  # character horizontal
+    c_ang: str  # character angled
+
+    @property
+    def inter(self) -> str:
+        """'Intersection' string for nodes that have further siblings."""
+        return self.c_int + 2*self.c_hor + " "
+    
+    @property
+    def last(self) -> str:
+        """'Last' string for nodes that have no further siblings (are the last child)."""
+        return self.c_ang + 2*self.c_hor + " "
+    
+    @property
+    def fill(self) -> str:
+        """'Filler' string to connect a node at a deeper level."""
+        return 4*self.c_hor
+
+    @property
+    def vert(self) -> str:
+        """'Vertical' string as horizontal filler for a child being printed at a deeper level."""
+        return self.c_ver + 3*" "
+    
+    @property
+    def empty(self) -> str:
+        """'Empty' string as a horizontal filler for a child being printed at a deeper level for the last element."""
+        return 4*" "
+
+treeCharSets = {
+    "basic": TreeCharSet("|", "+", "-", "+"),
+    "box_drawings_light": TreeCharSet("\u2502", "\u251c", "\u2500", "\u2514"),
 }
+linestyles: TypeAlias = Literal["basic"] | Literal["box_drawings_light"]
 
-Substance = TypeVar("Substance")
-Isotope = TypeVar("Isotope")
-Content: TypeAlias = Union[Substance, Isotope]
+
+Content: TypeAlias = Union[TypeVar("Substance"), TypeVar("Isotope")]
 
 class Node:
+    """Class to represent `Substance` and `Isotope` in hierarchical structure.
+    
+    Each node has a unique id, that is either the n-th created object (counter
+    for class) or can be set manually. Printed is the label, that has to be set
+    manually. Each node can have a parent and multiple children, representing
+    the hierarchy and placing the node at a certain depth of it. Right alligned
+    nodes will be printed at the maximum depth. Furthermore, each node can have
+    content assigned to it, which is either of type `Substance` or `Isotope`.
+    Optionally data may be specified in a dictionary.
+    """
 
-    _nodes = 0
+    _nodes = 0  # counter
 
-    def __init__(self, label: str, parent: Node = None, content: Content = None, id: Any = None, 
-                 data: dict[str, float] = None, **kwargs) -> None:
+    def __init__(self, label: str, parent: Node = None, content: Content = None,
+                 id: Any = None, data: dict[str, float] = None
+        ) -> None:
+        """Constructor of node.
+
+        Args:
+            label:
+                Descriptive name.
+            parent:
+                Parent node.
+            content:
+                Associated substance or isotope.
+            id:
+                Unique identifier.
+            data:
+                Associated data, containing additional information of the
+                content.
+        """
         
         self._nodes += 1
 
@@ -50,43 +117,49 @@ class Node:
         self.set_parent(parent)
 
 
-
+    # ########
+    # Properties
+    # ########
 
     @property
     def id(self):
-        """Returns identifier of node."""
+        """Unique Identifier."""
         return self._id
     
     @property
     def label(self):
-        """Returns label of node."""
+        """Descriptive label."""
         return self._label
     
     @property
     def content(self):
-        """Returns content of node."""
+        """Associated content."""
         return self._content
     
     @property
     def parent(self):
-        """Returns parent of node."""
+        """Parent node."""
         return self._parent
     
     @property
     def depth(self):
-        """Returns depth of node."""
+        """Depth of node in hierarchy."""
         return self._depth
 
     @property
     def children(self):
-        """Returns children of node."""
+        """Children nodes."""
         return self._children
     
     @property
     def data(self):
-        """Returns dictionary with available data."""
+        """Dictionary with additional data about content."""
         return self._data
     
+
+    # ########
+    # Construction
+    # ########
 
     def set_parent(self, new_parent: Node | None) -> None:
         """Sets parent of node."""
@@ -119,6 +192,10 @@ class Node:
         """Set alignment of node to right (max depth)."""
         self._right_align = True
 
+    
+    # ########
+    # Analysis
+    # ########
 
     def is_root(self) -> bool:
         """Returns if node is root node (first)."""
@@ -152,33 +229,48 @@ class Node:
     def max_depth(self) -> int:
         """Returns maximal depth of node structure."""
         return max(node.depth for node in self)
-        
-    def _append_to(self, collection: list[Node]) -> None:
-        """Append itself and children to list of nodes."""
-        
-        collection.append(self)
-        for child in self._children:
-            child._append_to(collection)
+
+
+    # ########
+    # Fetch
+    # ########
 
     def get_nodes_by_label(self, target: str) -> list[Node]:
-        """Returns all nodes, which label equals target."""
-        found = []
-        for node in self:
-            if node._label == target:
-                found.append(node)
-        return found
+        """Returns all nodes, which label equals target.
+        
+        Args:
+            target:
+                Label to search for.
+                
+        Returns:
+            List of nodes which label matches target label.
+        """
+        return [node for node in self if node._label == target]
 
     def get_nodes_by_content(self, target: Content) -> list[Node]:
-        """Returns all nodes, which content equals target."""
-        found = []
-        for node in self:
-            if node._content == target:
-                found.append(node)
-        return found
+        """Returns all nodes, which content equals target.
+        
+        Args:
+            target:
+                Content object to search for.
+                
+        Returns:
+            List of nodes which content matches target content.
+        """
+        return [node for node in self if node._content == target]
 
 
-    def print_tree(self) -> None:
-        """Prints node structure as tree."""
+    # ########
+    # Print
+    # ########
+
+    def print_tree(self, linestyle: linestyles = "box_drawings_light") -> None:
+        """Prints node structure as tree.
+        
+        Args:
+            linestyle:
+                Character set that is used to print lines in the tree.
+        """
 
         def print_node(node: Node):
 
@@ -186,10 +278,10 @@ class Node:
             pre = ""
             if node.depth > 0:
                 for last in last_ones[:node.depth-1]:
-                    pre += node_lines["empty"] if last else node_lines["vert"]
-                pre += node_lines["last"] if last_ones[node.depth-1] else node_lines["inter"]
+                    pre += tcs.empty if last else tcs.vert
+                pre += tcs.last if last_ones[node.depth-1] else tcs.inter
             if node._right_align:  # align at max depth
-                pre = pre.rstrip() + (max_depth-node.depth)*node_lines["fill"] + " "
+                pre = pre.rstrip() + (max_depth-node.depth)*tcs.fill + " "
 
             # construct data string
             data_str = []
@@ -204,7 +296,8 @@ class Node:
                     data_str.append(f"{value:.4f} g/mol")
                 if key == "rho":
                     data_str.append(f"{value:.4f} g/cm^3")
-            data_str = "  |  ".join(data_str)
+
+            data_str =  "  |  ".join(data_str)
 
             # actual print of current node
             print(f"{pre}{node.content.__class__.__name__} \"{node.label}\": {data_str}")
@@ -218,9 +311,24 @@ class Node:
                     last_ones[node._depth] = True
                 print_node(node._children[-1])
 
+        # get tree character set
+        try:
+            tcs = treeCharSets[linestyle]
+        except KeyError as ex:
+            print("Unknown character set for tree plotting. Instead using default value.")
+            tcs = treeCharSets["box_drawings_light"]
+
+        # setup print variables
         max_depth = self.max_depth()
         last_ones = [False for i in range(max_depth)]
+
+        # start recursive printing routine
         print_node(self)
+
+
+    # ########
+    # Operators
+    # ########
 
     def __str__(self) -> str:
         return f"{self._label}"

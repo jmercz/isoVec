@@ -1,8 +1,7 @@
 
 from src import isovec as iso
 
-# TODO: PEP-257 dicstrings (Google convention)
-# TODO: allow (read) slicing
+# TODO: number density [cm^-3] (https://en.wikipedia.org/wiki/Number_density)
 # TODO: copy function
 # TODO (far): IAEA Livechart Data Download API class
 
@@ -21,7 +20,7 @@ air = iso.Mixture("air", {
     nitrogen2:        iso.percent(50)   # Molecule
 })
 
-air.print_tree(weight=True)
+air.print_tree(weight=True, linestyle="basic")
 air_tree = air.make_node(weight=True)
 cont_O = air_tree.get_nodes_by_content(iso.O_nat)
 

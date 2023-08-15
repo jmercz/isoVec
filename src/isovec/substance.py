@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
 from .isotope import Isotope
-from .node import Node
+from .node import Node, linestyles
 
 
 Constituent: TypeAlias = Union["Substance", Isotope]
@@ -418,7 +418,7 @@ class Substance(metaclass=ABCMeta):
     # ########        
 
     def make_node(
-            self, atomic: bool = True, weight: bool = False, volume: bool = False, 
+            self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
             scale: bool = True, align_isotopes: bool = True
         ) -> Node:
         """Creates a node structure with substance as the root.
@@ -499,8 +499,9 @@ class Substance(metaclass=ABCMeta):
         return root
 
     def print_tree(
-            self, atomic: bool = True, weight: bool = False, volume: bool = False,
-            scale: bool = True, align_isotopes: bool = True
+            self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
+            scale: bool = True, align_isotopes: bool = True, 
+            linestyle: linestyles = "box_drawings_light"
         ) -> None:
         """Prints the substance and their constituents as a tree structure.
         
@@ -516,8 +517,10 @@ class Substance(metaclass=ABCMeta):
                 If scaled, constituents of each parent add up to unity.
             align_isotopes:
                 Flag to align all isotopes in one column.
+            linestyle:
+                Character set that is used to print lines in the tree.
         """
-        self.make_node(atomic, weight, volume, scale, align_isotopes).print_tree()
+        self.make_node(atomic, weight, volume, scale, align_isotopes).print_tree(linestyle=linestyle)
 
 
     # ########
