@@ -1,7 +1,6 @@
 
 from src import isovec as iso
 
-# TODO: number density [cm^-3] (https://en.wikipedia.org/wiki/Number_density)
 # TODO: copy function
 # TODO (far): IAEA Livechart Data Download API class
 

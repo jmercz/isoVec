@@ -13,7 +13,7 @@ from abc import ABCMeta, abstractmethod
 from .constants import N_A
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
 from .isotope import Isotope
-from .node import Node, linestyles
+from .node import Node, char_sets
 
 
 Constituent: TypeAlias = Union["Substance", Isotope]
@@ -514,7 +514,7 @@ class Substance(metaclass=ABCMeta):
     def print_tree(
             self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
             scale: bool = True, align_isotopes: bool = True, 
-            linestyle: linestyles = "box_drawings_light"
+            char_set: char_sets = "box_drawings_light"
         ) -> None:
         """Prints the hierarchical tree structure.
         
@@ -530,11 +530,11 @@ class Substance(metaclass=ABCMeta):
                 If scaled, constituents of each parent add up to unity.
             align_isotopes:
                 Flag to align all isotopes in one column.
-            linestyle:
+            char_set:
                 Character set that is used to print lines in the tree.
         """
         self.make_node(atomic, weight, volume,
-                       scale=scale, align_isotopes=align_isotopes).print_tree(linestyle=linestyle)
+                       scale=scale, align_isotopes=align_isotopes).print_tree(char_set=char_set)
 
 
     # ########

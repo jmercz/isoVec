@@ -55,7 +55,7 @@ treeCharSets = {
     "basic": TreeCharSet("|", "+", "-", "+"),
     "box_drawings_light": TreeCharSet("\u2502", "\u251c", "\u2500", "\u2514"),
 }
-linestyles: TypeAlias = Literal["basic"] | Literal["box_drawings_light"]
+char_sets: TypeAlias = Literal["basic"] | Literal["box_drawings_light"]
 
 
 Content: TypeAlias = Union[TypeVar("Substance"), TypeVar("Isotope")]
@@ -264,11 +264,11 @@ class Node:
     # Print
     # ########
 
-    def print_tree(self, linestyle: linestyles = "box_drawings_light") -> None:
+    def print_tree(self, char_set: char_sets = "box_drawings_light") -> None:
         """Prints node structure as tree.
         
         Args:
-            linestyle:
+            char_set:
                 Character set that is used to print lines in the tree.
         """
 
@@ -313,7 +313,7 @@ class Node:
 
         # get tree character set
         try:
-            tcs = treeCharSets[linestyle]
+            tcs = treeCharSets[char_set]
         except KeyError as ex:
             print("Unknown character set for tree plotting. Instead using default value.")
             tcs = treeCharSets["box_drawings_light"]
