@@ -10,6 +10,7 @@ from collections import defaultdict
 from typing import Any, TypeAlias, Union, Literal
 from abc import ABCMeta, abstractmethod
 
+from .constants import N_A
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
 from .isotope import Isotope
 from .node import Node, linestyles
@@ -156,9 +157,7 @@ class Substance(metaclass=ABCMeta):
 
     @classmethod
     def from_atomic(cls, name: str, constituents: dict[Constituent, float], **kwargs) -> Substance:
-        """Returns substance by providing constituents with their atomic (mole) fraction.
-        
-        Passes inputs to constructor.
+        """Constructor for providing atomic (mole) fractions of constituents.
 
         Args:
             name:
@@ -185,9 +184,7 @@ class Substance(metaclass=ABCMeta):
 
     @classmethod
     def from_weight(cls, name: str, constituents: dict[Constituent, float], **kwargs) -> Substance:
-        """Returns substance by providing constituents with their weight fraction.
-        
-        Passes inputs to constructor.
+        """Constructor for providing weight fractions of constituents.
 
         Args:
             name:
@@ -214,10 +211,8 @@ class Substance(metaclass=ABCMeta):
 
     @classmethod
     def from_volume(cls, name: str, constituents: dict[Constituent, float], **kwargs) -> Substance:
-        """Returns substance by providing constituents with their volume fraction.
+        """Constructor for providing volume fractions of constituents.
         
-        Passes inputs to constructor.
-
         Args:
             name:
                 Descriptive name.
@@ -248,7 +243,7 @@ class Substance(metaclass=ABCMeta):
 
     @property
     def name(self):
-        """Name of the substance."""
+        """Given name."""
         return self._name
 
     @property
@@ -258,23 +253,28 @@ class Substance(metaclass=ABCMeta):
 
     @property
     def M(self):
-        """Molar mass [g mol^-1] of the substance."""
+        """Molar mass [g mol^-1]."""
         return self._M
     
     @property
     def rho(self):
-        """Density [g cm^-3] of the substance."""
+        """Density [g cm^-3]."""
         return self._rho
 
     @property
     def symbol(self):
-        """Symbol of the substance."""
+        """Symbol."""
         return self._symbol
 
     @property
     def V_m(self):
-        """Molar volume [cm^3 mol^-1] of the substance."""
+        """Molar volume [cm^3 mol^-1]."""
         return self._calc_V_m()
+    
+    @property
+    def n(self):
+        """Number density [cm^-3]."""
+        return self._calc_n()
 
 
     # ########
@@ -282,7 +282,7 @@ class Substance(metaclass=ABCMeta):
     # ########
 
     def _calc_M(self) -> float:
-        r"""Calculates average molar mass of the substance.
+        r"""Calculates average molar mass.
         
         The molar masses of all constituents are weighted by their atomic
         fraction and summed up:
@@ -296,7 +296,7 @@ class Substance(metaclass=ABCMeta):
             return 0.0
 
     def _calc_V_m(self) -> float:
-        r"""Calculates molar volume of the substance.
+        r"""Calculates molar volume.
 
         Molar mass is divided by density:
             $$V_m = \frac{M}{\rho}$$
@@ -307,6 +307,19 @@ class Substance(metaclass=ABCMeta):
             return self._M / self._rho
         else:
             return 0.0
+        
+    def _calc_n(self) -> float:
+        r"""Calculates number density.
+
+        Density is normalised by the mass of a single atom or molecule:
+            $$n = \frac{N_{\mathrm{A}}}{M} \rho$$
+        Will return zero if calculation is not possible.
+        """
+
+        if self._M != 0 and self._rho != 0:
+            return N_A / self._M * self._rho
+        else:
+            return 0.0
 
     
     # ########
@@ -314,7 +327,7 @@ class Substance(metaclass=ABCMeta):
     # ########
 
     def get_constituents_in_wt(self) -> dict[Constituent, float]:
-        """Returns constituent dictionary of substance with weight fractions."""
+        """Returns constituent dictionary with weight fractions."""
         
         at_fracs = [x_i for x_i in self._constituents.values()]
         molar_masses = [constituent.M for constituent in self._constituents.keys()]
@@ -323,7 +336,7 @@ class Substance(metaclass=ABCMeta):
         return {constituent: w_i for constituent, w_i in zip(self._constituents.keys(), wt_fracs)}
    
     def get_constituents_in_vol(self) -> dict[Constituent, float]:
-        """Returns constituent dictionary of substance with volume fractions."""
+        """Returns constituent dictionary with volume fractions."""
         
         at_fracs = [x_i for x_i in self._constituents.values()]
         molar_volumes = [constituent.V_m for constituent in self._constituents.keys()]
@@ -421,7 +434,7 @@ class Substance(metaclass=ABCMeta):
             self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
             scale: bool = True, align_isotopes: bool = True
         ) -> Node:
-        """Creates a node structure with substance as the root.
+        """Creates a hierarchical node structure with instance as the root.
         
         Args:
             atomic:
@@ -437,7 +450,7 @@ class Substance(metaclass=ABCMeta):
                 Flag to force all isotopes at maximum depth.
         
         Returns:
-            Node structure with substance instance as root.
+            Node structure with instance as root.
         """
 
         def add_constituents(parent_node: Node, x_p: float = 1.0, w_p: float = 1.0, phi_p: float = 1.0):
@@ -503,7 +516,7 @@ class Substance(metaclass=ABCMeta):
             scale: bool = True, align_isotopes: bool = True, 
             linestyle: linestyles = "box_drawings_light"
         ) -> None:
-        """Prints the substance and their constituents as a tree structure.
+        """Prints the hierarchical tree structure.
         
         Args:
             atomic:
@@ -520,7 +533,8 @@ class Substance(metaclass=ABCMeta):
             linestyle:
                 Character set that is used to print lines in the tree.
         """
-        self.make_node(atomic, weight, volume, scale, align_isotopes).print_tree(linestyle=linestyle)
+        self.make_node(atomic, weight, volume,
+                       scale=scale, align_isotopes=align_isotopes).print_tree(linestyle=linestyle)
 
 
     # ########
