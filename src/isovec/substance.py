@@ -311,7 +311,7 @@ class Substance(metaclass=ABCMeta):
     def _calc_n(self) -> float:
         r"""Calculates number density.
 
-        Avogadro constant devided by molar volume (density is normalised by the
+        Avogadro constant divided by molar volume (density is normalised by the
         mass of a single atom or molecule):
             $$n = \frac{N_{\mathrm{A}}}{V_m} = \frac{N_{\mathrm{A}}}{M} \rho$$
         Will return zero if calculation is not possible.
@@ -503,7 +503,7 @@ class Substance(metaclass=ABCMeta):
                 # create child node for constituents of constituents (if applicable)
                 if isinstance(constituent, Isotope):
                     if align_isotopes:
-                        node.align_right()
+                        node.align_right(label_size=6)
                 else:
                     add_constituents(parent_node=node, x_p=x_i, w_p=w_i, phi_p=phi_i)
 

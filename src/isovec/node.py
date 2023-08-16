@@ -188,9 +188,19 @@ class Node:
         """Adds key-value (str-float) pair to data of node."""
         self._data[key] = value
 
-    def align_right(self, value: bool = True) -> None:
-        """Set alignment of node to right (max depth)."""
-        self._right_align = True
+    def align_right(self, value: bool = True, label_size: int = -1) -> None:
+        """Set alignment of node to right (max depth).
+        
+        Args:
+            value:
+                Wheter node shall be right aligned.
+            label_size:
+                Fix size of node label, for better alignment.
+        """
+
+        self._right_align = value
+        if label_size > 0:
+            self._label = f"{self._label:>{label_size}}"
 
     
     # ########
@@ -306,7 +316,9 @@ class Node:
             data_str =  "  |  ".join(data_str)
 
             # actual print of current node
-            print(f"{pre}{node.content.__class__.__name__} \"{node.label}\": {data_str}")
+            label_str = f"\"{node.label.strip()}\""
+            label_str_len = len(node.label) + 2
+            print(f"{pre}{node.content.__class__.__name__} {label_str:>{label_str_len}}: {data_str}")
 
             # print children
             if node._children:
