@@ -153,3 +153,46 @@ if __name__ == "__main__":
         iso.Pb_nat: -65
     })
     SnPb2.print_overview(True)
+
+
+
+    print()
+    print()
+    print(80*"X")
+    ###################
+    ### 20 vol.% alcohol in water
+    ###################
+    desc = r"""
+    test conversion from volume to weight percent
+    as in https://rechneronline.de/volume-mass-percent/
+    Mixture of 20 vol.% alcohol in water
+    """
+
+    print()
+    print(r"20 vol.% alcohol in water Test Case")
+    print(desc)
+
+    print()
+    print("Expected results:")
+    print("Alcohol: 16.5 at.%")
+    print()
+
+    alcohol = iso.Molecule(
+        "alcohol", {},
+        M=46.08,
+        rho=0.789  # from website
+    )
+    water = iso.Molecule(
+        "water", {},
+        M=18.01528,
+        rho=1.  # from website
+    )
+    mix = iso.Mixture("mix", {
+        alcohol: 20,
+        water: 100-20
+    }, mode="volume")
+
+    print(30*"#")
+    print()
+    print("Mixture calculated by script:")
+    mix.print_tree(weight=True, volume=True)
