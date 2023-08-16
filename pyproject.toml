@@ -7,20 +7,21 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["isovec*"]
-exclude = ["extension*"]
+exclude = []
 
 
 [project]
 name = "isovec"
-version = "1.1.0a1"
+version = "1.1.0"
 authors = [
     { name="Julius Mercz", email="julius.mercz@tum.de" }
 ]
-description = "A package to calculate isotopic composition of (custom) Elements, Molecules and Mixtures."
+description = "A package to calculate atomic, weight or volume composition of (custom) elements, molecules and mixtures, down to isotopic composition."
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.9"
-keywords = ["isotope", "element", "molecule", "mixture", "alloy", "composition", "weight", "atomic"]
+requires-python = ">=3.10"
+keywords = ["isotope", "element", "molecule", "mixture", "alloy", "material",
+ "composition", "weight", "atomic", "mole", "volume"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Scientific/Engineering :: Physics",

@@ -31,18 +31,16 @@ air = iso.Mixture("air", {
     methane:           iso.ppm(  1.87),     # Molecule
     iso.Kr_nat:        iso.ppm(  1.14)      # Element
 })
-air.print_overview(True)
+air.print_tree(weight=True, align_isotopes=True)
+#air.print_overview(True)
 
-isotope_vector = air.get_isotopes(use_natural=False)
+print()
+isotope_vector = air.get_isotopes(mode="atomic")
 for isotope, at_frac in isotope_vector.items():
-    print(f"{isotope.name:>6}: {at_frac*1e2:.4f} at.%")
+    print(f"{isotope.name:>6}: {at_frac:.4E}")
 
 print()
-isotope_vector_wt = air.get_isotopes(mode="weight", use_natural=False)
-for isotope, wt_frac in isotope_vector_wt.items():
-    print(f"{isotope.name:>6}: {wt_frac*1e2:.4f} wt.%")
-
-print()
-tree = air.print_tree(weight=True, align_isotopes=True)
-print()
-
+isotope_vector = air.get_isotopes(mode="atomic", use_natural=True)
+for isotope, at_frac in isotope_vector.items():
+    name = isotope.element_symbol() + "-nat"
+    print(f"{name:>6}: {at_frac:.4E}")
