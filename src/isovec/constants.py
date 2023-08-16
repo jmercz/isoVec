@@ -5,9 +5,11 @@ Mappings of atomic number to element symbol and element symbol to element name.
 """
 
 
-N_A = 6.02214076E+23  # Avogadro constant [mol^-1]
+N_A = 6.02214076E+23  # 
+"""Avogadro constant [mol^-1]."""
 
-M_u = 0.99999999965E-03  # ...(30) molar mass constant [kg mol^-1] after 2019 redefinition
+M_u = 0.99999999965E-03  # ...(30)
+"""Molar mass constant [kg mol^-1] (after 2019 redefinition)."""
 
 ATOM_NUMB_TO_SYMBOL = {
     1:   "H",

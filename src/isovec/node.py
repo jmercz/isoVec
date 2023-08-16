@@ -1,4 +1,4 @@
-"""Contains classes for Node, its helper classes and legacy seperator strings.
+"""Class for Node, its helper classes and legacy seperator strings.
 
 The Node class is used to create tree structures of `Substance` objects.
 The TreeCharSet class is a helper class to streamline different line styles in

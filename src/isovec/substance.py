@@ -311,8 +311,9 @@ class Substance(metaclass=ABCMeta):
     def _calc_n(self) -> float:
         r"""Calculates number density.
 
-        Density is normalised by the mass of a single atom or molecule:
-            $$n = \frac{N_{\mathrm{A}}}{M} \rho$$
+        Avogadro constant devided by molar volume (density is normalised by the
+        mass of a single atom or molecule):
+            $$n = \frac{N_{\mathrm{A}}}{V_m} = \frac{N_{\mathrm{A}}}{M} \rho$$
         Will return zero if calculation is not possible.
         """
 
@@ -464,9 +465,16 @@ class Substance(metaclass=ABCMeta):
             if atomic:
                 at_fracs = list(substance._constituents.values())
             if weight:
-                wt_fracs = list(substance.get_constituents_in_wt().values())
+                try:
+                    wt_fracs = list(substance.get_constituents_in_wt().values())
+                except ValueError as ex:  # constituent ahs no molar mass (unlikely)
+                    wt_fracs = None
             if volume:
-                vol_fracs = list(substance.get_constituents_in_vol().values())
+                try:
+                    vol_fracs = list(substance.get_constituents_in_vol().values())
+                except (ValueError, AttributeError) as ex:  # constituent has no density or is an isotope
+                    vol_fracs = None
+
 
             for i, constituent in enumerate(constituents):
                 
@@ -475,10 +483,10 @@ class Substance(metaclass=ABCMeta):
                 if atomic:
                     x_i = at_fracs[i] * x_p if scale else at_fracs[i]
                     constituent_data["x"] = x_i
-                if weight:
+                if weight and wt_fracs:
                     w_i = wt_fracs[i] * w_p if scale else wt_fracs[i]
                     constituent_data["w"] = w_i
-                if volume:
+                if volume and vol_fracs:
                     phi_i = vol_fracs[i] * phi_p if scale else vol_fracs[i]
                     constituent_data["phi"] = phi_i
                 if constituent.M:
