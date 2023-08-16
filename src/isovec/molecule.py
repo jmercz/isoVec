@@ -13,7 +13,8 @@ class Molecule(Substance):
 
     A molecule shares its properties with its parent class `Substance`, with
     the exception that constituents can only be elements. The distribution of
-    constituents can be expressed as fractions or in integers.
+    constituents can be expressed as fractions or in integers, which sum up to
+    the total amount of atoms in the molecule.
     """
 
     # override

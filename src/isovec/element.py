@@ -16,8 +16,9 @@ class Element(Substance):
 
     An element shares its properties with its parent class `Substance`, with
     the exception that constituents can only be isotopes and therefore has a
-    well-defined atomic number itself. An element can be flagged as a natural
-    element, indicating the natural abundance of its isotopes. 
+    well-defined atomic number Z and relative atomic mass A_r itself. An 
+    element can be flagged as a natural element, indicating the natural 
+    abundance of its isotopes. 
     """
 
     # override

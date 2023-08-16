@@ -52,7 +52,7 @@ class Isotope:
 
     @property
     def name(self):
-        """Name of the isotope."""
+        """Descriptive name."""
         return self._name
 
     @property
@@ -67,7 +67,7 @@ class Isotope:
 
     @property
     def A_r(self):
-        """Relative atomic mass (atomic weight) [-] of the isotope."""
+        """Relative atomic mass (atomic weight) [-]."""
         return self._A_r
 
     @property
@@ -77,7 +77,7 @@ class Isotope:
 
     @property
     def M(self):
-        """Molar mass [g mol^-1] of the isotope."""
+        """Molar mass [g mol^-1]."""
         return self.calc_M()
 
     @property
@@ -87,12 +87,12 @@ class Isotope:
     
     @property
     def ZA(self):
-        """ZA notation of the isotope."""
+        """ZA notation."""
         return self.ZA_notation()
     
     @property
     def ZAI(self):
-        """ZAI notation of the isotope."""
+        """ZAI notation."""
         return self.ZAI_notation()
 
 
@@ -108,7 +108,7 @@ class Isotope:
         """Calculates neutron number (number of neutrons)."""
         return self._A - self._Z
     
-    def get_symbol(self) -> str:
+    def element_symbol(self) -> str:
         """Returns symbol of element that isotope represents."""
         return ATOM_NUMB_TO_SYMBOL[self._Z]
     
@@ -136,7 +136,7 @@ class Isotope:
                 Flag to explicitly show isomeric state of isotope.
         """
         
-        name = f"{self.get_symbol()}-{self._A}"
+        name = f"{self.element_symbol()}-{self._A}"
         
         if verbose:
             if self._I == 0:
