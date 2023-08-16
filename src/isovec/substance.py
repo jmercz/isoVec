@@ -514,6 +514,7 @@ class Substance(metaclass=ABCMeta):
         if self._rho:
             root_data["rho"] = self._rho
 
+        # create root node and start recursive hierarchy construction
         root = Node(label=str(self), content=self, data=root_data)
         add_constituents(parent_node=root)
 
@@ -522,7 +523,7 @@ class Substance(metaclass=ABCMeta):
     def print_tree(
             self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
             scale: bool = True, align_isotopes: bool = True, 
-            char_set: char_sets = "box_drawings_light"
+            char_set: char_sets = "box_drawings_light", **kwargs
         ) -> None:
         """Prints the hierarchical tree structure.
         
@@ -540,9 +541,19 @@ class Substance(metaclass=ABCMeta):
                 Flag to align all isotopes in one column.
             char_set:
                 Character set that is used to print lines in the tree.
+            **kwargs:
+                Arguments passed to the plotting routine of Node.
+
+        Keyword Args:
+            frac_fmt (str):
+                Format string to be used for fractions.
+            prop_fmt (str):
+                Format string to be used for physical properties.
         """
-        self.make_node(atomic, weight, volume,
-                       scale=scale, align_isotopes=align_isotopes).print_tree(char_set=char_set)
+        self.make_node(
+            atomic, weight, volume,
+            scale=scale, align_isotopes=align_isotopes,
+        ).print_tree(char_set=char_set, **kwargs)
 
 
     # ########

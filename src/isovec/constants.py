@@ -5,7 +5,7 @@ Mappings of atomic number to element symbol and element symbol to element name.
 """
 
 
-N_A = 6.02214076E+23  # 
+N_A = 6.02214076E+23
 """Avogadro constant [mol^-1]."""
 
 M_u = 0.99999999965E-03  # ...(30)
@@ -131,6 +131,7 @@ ATOM_NUMB_TO_SYMBOL = {
     117: "Ts",
     118: "Og"
 }
+"""Maps atomic number to element symbol."""
 
 SYMBOL_TO_NAME = {
     "H":  "hydrogen",
@@ -252,3 +253,4 @@ SYMBOL_TO_NAME = {
     "Ts": "tennessine",
     "Og": "oganesson"
 }
+"""Maps element symbol to element long name."""

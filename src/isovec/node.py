@@ -264,12 +264,19 @@ class Node:
     # Print
     # ########
 
-    def print_tree(self, char_set: char_sets = "box_drawings_light") -> None:
+    def print_tree(
+            self, char_set: char_sets = "box_drawings_light", *, 
+            frac_fmt: str = "8.4f", prop_fmt: str = ".4f"
+        ) -> None:
         """Prints node structure as tree.
         
         Args:
             char_set:
                 Character set that is used to print lines in the tree.
+            frac_fmt:
+                Format string to be used for fractions.
+            prop_fmt:
+                Format string to be used for physical properties.
         """
 
         def print_node(node: Node):
@@ -287,16 +294,15 @@ class Node:
             data_str = []
             for key, value in node.data.items():
                 if key == "x":
-                    data_str.append(f"{value*1e2:8.4f} at.%")
+                    data_str.append(f"{value*1e2:{frac_fmt}} at.%")
                 if key == "w":
-                    data_str.append(f"{value*1e2:8.4f} wt.%")
+                    data_str.append(f"{value*1e2:{frac_fmt}} wt.%")
                 if key == "phi":
-                    data_str.append(f"{value*1e2:8.4f} vol.%")
+                    data_str.append(f"{value*1e2:{frac_fmt}} vol.%")
                 if key == "M":
-                    data_str.append(f"{value:.4f} g/mol")
+                    data_str.append(f"{value:{prop_fmt}} g/mol")
                 if key == "rho":
-                    data_str.append(f"{value:.4f} g/cm^3")
-
+                    data_str.append(f"{value:{prop_fmt}} g/cm^3")
             data_str =  "  |  ".join(data_str)
 
             # actual print of current node
