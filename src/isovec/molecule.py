@@ -13,22 +13,22 @@ class Molecule(Substance):
 
     A molecule shares its properties with its parent class `Substance`, with
     the exception that constituents can only be elements. The distribution of
-    constituents can be expressed as fractions or in integers, which sum up to
-    the total amount of atoms in the molecule.
+    elements can be expressed as fractions or in integers, which sum up to the
+    total amount of atoms in the molecule.
     """
 
     # override
     @classmethod
-    def _get_allowed_classes(cls):
+    def _get_allowed_constituents(cls):
         return (Element,)
 
-    def __init__(self, name: str, elements: dict[Element, float], mode: str = "_legacy", **kwargs) -> None:
+    def __init__(self, name: str, composition: dict[Element, float], mode: str = "_legacy", **kwargs) -> None:
         """Constructor of molecule.
         
         Args:
             name:
                 Descriptive name.
-            elements:
+            composition:
                 Dictionary that maps an element of the molecule to its atomic
                 fraction or number of atoms. Values are normalsied and don't
                 need to add up to unity.
@@ -52,14 +52,14 @@ class Molecule(Substance):
             not an element.
         """
 
-        self._atoms: int = int(sum(elements.values()))  # number of atoms in molecule
+        self._atoms: int = int(sum(composition.values()))  # number of atoms in molecule
 
-        super().__init__(name=name, constituents=elements, mode=mode, **kwargs)
+        super().__init__(name=name, composition=composition, mode=mode, **kwargs)
 
         # construct symbol
         if not self._symbol:
             sym = ""
-            for element, atoms in self.constituent_atoms.items():
+            for element, atoms in self.get_constituent_in_atoms().items():
                 sym += f"{element.element_symbol()}"
                 if atoms > 1:
                     sym += f"{atoms:.2g}"
@@ -67,25 +67,25 @@ class Molecule(Substance):
         
     # override
     @classmethod
-    def _inp_constituents_weight(cls, inp_constituents: dict[Element, float]) -> dict[Element, float]:
+    def _inp_composition_weight(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
         raise ValueError(f"Input mode 'weight' is disabled for {cls.__name__} creation.")
     
     # override
     @classmethod
-    def _inp_constituents_volume(cls, inp_constituents: dict[Element, float]) -> dict[Element, float]:
+    def _inp_composition_volume(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
         raise ValueError(f"Input mode 'volume' is disabled for {cls.__name__} creation.")
 
     # override
     @classmethod
-    def _inp_constituents_legacy(cls, inp_constituents: dict[Element, float]) -> dict[Element, float]:
+    def _inp_composition_legacy(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
         
-        if not all(frac > 0 for frac in inp_constituents.values()):  # either all negative or mixed
-            if all(frac < 0 for frac in inp_constituents.values()):  # all negative -> weight fractions given, need to be converted
+        if not all(frac > 0 for frac in inp_composition.values()):  # either all negative or mixed
+            if all(frac < 0 for frac in inp_composition.values()):  # all negative -> weight fractions given, need to be converted
                 raise ValueError(f"Could not create {cls.__name__}: Giving weight fractions is not allowed for molecules..")
             else:  # mixed, not allowed
                 raise ValueError(f"Could not create {cls.__name__}: Mixing of atomic and weight fractions is not allowed.")
         else:  # all positive -> atomic fractions given, no action needed
-            return inp_constituents
+            return inp_composition
 
 
     # ########
@@ -96,11 +96,6 @@ class Molecule(Substance):
     def atoms(self):
         """Number of atoms in the molecule."""
         return self._atoms
-    
-    @property
-    def constituent_atoms(self):
-        """Dictionary with constituents and their number of atoms in the molecule."""
-        return {constituent: int(x_i*self._atoms) for constituent, x_i in self._constituents.items()}
     
 
     # ########
@@ -116,10 +111,19 @@ class Molecule(Substance):
             $$\overline{M} = \sum_i \left( N_i \cdot M_i \right)$$
         Will return zero if calculation is not possible.
         """
-        if all(constituent.M > 0 for constituent in self._constituents.keys()):
-            return sum(N_i*constituent.M for constituent, N_i in self.constituent_atoms.items())
+        if all(constituent.M > 0 for constituent in self._composition.keys()):
+            return sum(N_i*constituent.M for constituent, N_i in self.get_constituent_in_atoms().items())
         else:
             return 0.0
+
+
+    # ########
+    # Conversion
+    # ########
+
+    def get_constituent_in_atoms(self) -> dict[Element, float]:
+        """Returns constituents with their number of atoms."""
+        return {element: int(x_i*self._atoms) for element, x_i in self._composition.items()}
 
 
     # ########
@@ -145,11 +149,11 @@ class Molecule(Substance):
         print("{0} Molecule \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
         print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
 
-        wt_constituents = self.get_constituents_in_wt()
+        wt_composition = self.get_composition_in_wt()
         
-        for i, (element, x_i) in enumerate(self._constituents.items(), start = 1):
+        for i, (element, x_i) in enumerate(self._composition.items(), start = 1):
             cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_constituents[element]
+            w_i = wt_composition[element]
 
             if scale:
                 x_i = x_p * x_i

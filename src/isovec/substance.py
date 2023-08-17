@@ -21,40 +21,41 @@ Constituent: TypeAlias = Union["Substance", Isotope]
 class Substance(metaclass=ABCMeta):
     """Abstract base class for all types of substances.
 
-    Each substance has a name and is made of constituents, each accounting for a
-    certain fraction, in this case saved as atomic (or mole) fraction. Every
-    substance has a molar mass, that can be calculated from its constituents,
-    since the basis is made of isotopes, that have their mass implemented.
-    A density can generally not be calculated but instead must be stated
-    explicitly. Optionally, a shorter name can be given in the form of a symbol.
+    Each substance has a name and is a composition of constituents, each
+    accounting for a certain fraction. Internally, this is saved as atomic (or
+    mole) fraction. Every substance has a molar mass, that can be calculated
+    from its composition, since the basis is made of isotopes, that have their 
+    mass implemented. Density can generally not be calculated but instead must
+    be stated explicitly. Optionally, a shorter name can be given in the form
+    of a symbol.
     """
     
     @classmethod
     @abstractmethod
-    def _get_allowed_classes(cls):
+    def _get_allowed_constituents(cls):
         """Returns a tuple of allowed classes for constituents."""
         return NotImplementedError
     
     _NORMALISE = True  # normalisation of atomic fractions
 
     @abstractmethod
-    def __init__(self, name: str, constituents: dict[Constituent, float], mode: str = "_legacy", **kwargs) -> None:
+    def __init__(self, name: str, composition: dict[Constituent, float], mode: str = "_legacy", **kwargs) -> None:
         """Constructor of substance.
         
         Args:
             name:
                 Descriptive name.
-            constituents:
+            composition:
                 Dictionary that maps a constituent of the substance to its
                 fraction. The fractions are physically interpreted according
                 to the given mode. Values are normalsied and don't need to add
                 up to unity.
             mode:
-                Fractions in constituents can be interpreted as atomic, weight
-                or volumetric fractions. Volumetric is only valid, if all 
-                constituents have a density. The default value allows inputs
-                as before 1.1.0, where positive fractions refer to atomic and 
-                negative fractions to weight.
+                Fractions in the composition can be interpreted as atomic,
+                weight or volumetric fractions. Volumetric is only valid, if
+                all constituents have a density. The default value allows
+                inputs as before v1.1.0, where positive fractions refer to
+                atomic and negative fractions to weight.
             **kwargs:
                 Keyword arguments to override values.
         
@@ -68,42 +69,42 @@ class Substance(metaclass=ABCMeta):
 
         Raises:
             ValueError: If non-valid constructor mode or given constituent is
-            not allowed as constituent of substance.
+            not allowed as constituent for substance.
         """
 
         self._name = name                             # name of the substance
-        self._constituents: dict[Constituent, float]  # {constituent: atomic (mole) fraction abundance}
+        self._composition: dict[Constituent, float]   # {constituent: atomic (mole) fraction}
         self._M: float                                # molar mass [g mol^-1]
         self._rho: float                              # density [g cm^-3]
         self._symbol: str                             # symbol of the substance
 
         # ensure input constituents are of allowed classes
-        for constituent in constituents.keys():
+        for constituent in composition.keys():
             if not self.instance_is_allowed(constituent):
-                type_names = ", ".join(_type.__name__ for _type in self._get_allowed_classes())
+                type_names = ", ".join(_type.__name__ for _type in self._get_allowed_constituents())
                 raise ValueError(f"Could not create {self.__class__.__name__} object with type {constituent.__class__.__name__} as constituent.\n"
                                  + f"Valid classes for {self.__class__.__name__} constituents: {type_names}.")
 
-        # ensure atomic fraction of input constituents
+        # ensure atomic fraction of input composition
         if mode == "_legacy":  # as done before 1.1.0
-            constituents = self._inp_constituents_legacy(constituents)
+            composition = self._inp_composition_legacy(composition)
         elif mode in {"atomic", "at", "mole", "mol"}:  # no conversion, only assure positive values
-            constituents = self._inp_constituents_atomic(constituents)
+            composition = self._inp_composition_atomic(composition)
         elif mode in {"weight", "wt"}:  # convert from weight fractions
-            constituents = self._inp_constituents_weight(constituents)
+            composition = self._inp_composition_weight(composition)
         elif mode in {"volume", "vol"}:  # convert from volume fractions
-            constituents = self._inp_constituents_volume(constituents)
+            composition = self._inp_composition_volume(composition)
         elif mode == "_skip":  # no action
-            constituents = constituents
+            composition = composition
         else:
             raise ValueError(f"Unknown constructor mode \"{mode}\".")
 
-        # populate constituents dictionary
-        x_sum = sum(constituents.values())
+        # populate composition dictionary
+        x_sum = sum(composition.values())
         if self._NORMALISE:  # normalise fractions
-            self._constituents = {constituent: (x_i / x_sum) for constituent, x_i in constituents.items() if x_i > 0}
+            self._composition = {constituent: (x_i / x_sum) for constituent, x_i in composition.items() if x_i > 0}
         else:  # no normalisation
-            self._constituents = {constituent: x_i for constituent, x_i in constituents.items() if x_i > 0}
+            self._composition = {constituent: x_i for constituent, x_i in composition.items() if x_i > 0}
 
         # get molar mass and density from kwargs or calculate it
         self._M = kwargs.get("M", self._calc_M())
@@ -111,44 +112,44 @@ class Substance(metaclass=ABCMeta):
         self._symbol = kwargs.get("symbol", "")
     
     @classmethod
-    def _inp_constituents_atomic(cls, inp_constituents: dict[Constituent, float]) -> dict[Constituent, float]:
+    def _inp_composition_atomic(cls, inp_composition: dict[Constituent, float]) -> dict[Constituent, float]:
         """Returns constituent dictionary with atomic (mole) fractions for given atomic (mole) fractions."""
-        return {constituent: abs(x_i) for constituent, x_i in inp_constituents.items()}
+        return {constituent: abs(x_i) for constituent, x_i in inp_composition.items()}
     
     @classmethod
-    def _inp_constituents_weight(cls, inp_constituents: dict[Constituent, float]) -> dict[Constituent, float]:
+    def _inp_composition_weight(cls, inp_composition: dict[Constituent, float]) -> dict[Constituent, float]:
         """Returns constituent dictionary with atomic (mole) fractions for given weight fractions."""
         
-        wt_fracs = [abs(w_i) for w_i in inp_constituents.values()]
-        molar_masses = [constituent.M for constituent in inp_constituents.keys()]
+        wt_fracs = [abs(w_i) for w_i in inp_composition.values()]
+        molar_masses = [constituent.M for constituent in inp_composition.keys()]
 
         at_fracs = wt_to_at(wt_fracs, molar_masses)
-        return {constituent: x_i for constituent, x_i in zip(inp_constituents.keys(), at_fracs)}
+        return {constituent: x_i for constituent, x_i in zip(inp_composition.keys(), at_fracs)}
     
     @classmethod
-    def _inp_constituents_volume(cls, inp_constituents: dict[Constituent, float]) -> dict[Constituent, float]:
+    def _inp_composition_volume(cls, inp_composition: dict[Constituent, float]) -> dict[Constituent, float]:
         """Returns constituent dictionary with atomic (mole) fractions for given volume fractions."""
         
-        vol_fracs = [abs(phi_i) for phi_i in inp_constituents.values()]
-        molar_volumes = [constituent.V_m for constituent in inp_constituents.keys()]
+        vol_fracs = [abs(phi_i) for phi_i in inp_composition.values()]
+        molar_volumes = [constituent.V_m for constituent in inp_composition.keys()]
 
         at_fracs = vol_to_at(vol_fracs, molar_volumes)
-        return {constituent: x_i for constituent, x_i in zip(inp_constituents.keys(), at_fracs)}
+        return {constituent: x_i for constituent, x_i in zip(inp_composition.keys(), at_fracs)}
 
     @classmethod
-    def _inp_constituents_legacy(cls, inp_constituents: dict[Constituent, float]) -> dict[Constituent, float]:
+    def _inp_composition_legacy(cls, inp_composition: dict[Constituent, float]) -> dict[Constituent, float]:
         """Returns constituent dictionary with atomic (mole) fractions as done before 1.1.0.
         
         Legacy method to maintain backwards compatibility.
         """
         
-        if not all(frac > 0 for frac in inp_constituents.values()):  # either all negative or mixed
-            if all(frac < 0 for frac in inp_constituents.values()):  # all negative -> weight fractions given, need to be converted
-                return cls._inp_constituents_weight(inp_constituents)
+        if not all(frac > 0 for frac in inp_composition.values()):  # either all negative or mixed
+            if all(frac < 0 for frac in inp_composition.values()):  # all negative -> weight fractions given, need to be converted
+                return cls._inp_composition_weight(inp_composition)
             else:  # mixed, not allowed
                 raise ValueError(f"Could not create {cls.__name__}: Mixing of atomic and weight fractions is not allowed.")
         else:  # all positive -> atomic fractions given, no action needed
-            return inp_constituents
+            return inp_composition
 
 
     # ########
@@ -156,13 +157,13 @@ class Substance(metaclass=ABCMeta):
     # ########
 
     @classmethod
-    def from_atomic(cls, name: str, constituents: dict[Constituent, float], **kwargs) -> Substance:
+    def from_atomic(cls, name: str, composition: dict[Constituent, float], **kwargs) -> Substance:
         """Constructor for providing atomic (mole) fractions of constituents.
 
         Args:
             name:
                 Descriptive name.
-            constituents:
+            composition:
                 Dictionary that maps a constituent of the substance to its
                 atomic fraction. Values are normalsied and don't need to add up
                 to unity.
@@ -180,16 +181,16 @@ class Substance(metaclass=ABCMeta):
         Returns:
             Substance instance.
         """
-        return cls(name, constituents, mode="atomic", **kwargs)
+        return cls(name, composition, mode="atomic", **kwargs)
 
     @classmethod
-    def from_weight(cls, name: str, constituents: dict[Constituent, float], **kwargs) -> Substance:
+    def from_weight(cls, name: str, composition: dict[Constituent, float], **kwargs) -> Substance:
         """Constructor for providing weight fractions of constituents.
 
         Args:
             name:
                 Descriptive name.
-            constituents:
+            composition:
                 Dictionary that maps a constituent of the substance to its
                 weight fraction. Values are normalsied and don't need to add up
                 to unity.
@@ -207,16 +208,16 @@ class Substance(metaclass=ABCMeta):
         Returns:
             Substance instance.
         """
-        return cls(name, constituents, mode="weight", **kwargs)
+        return cls(name, composition, mode="weight", **kwargs)
 
     @classmethod
-    def from_volume(cls, name: str, constituents: dict[Constituent, float], **kwargs) -> Substance:
+    def from_volume(cls, name: str, composition: dict[Constituent, float], **kwargs) -> Substance:
         """Constructor for providing volume fractions of constituents.
         
         Args:
             name:
                 Descriptive name.
-            constituents:
+            composition:
                 Dictionary that maps a constituent of the substance to its
                 volume fraction. Values are normalsied and don't need to add up
                 to unity.
@@ -234,7 +235,7 @@ class Substance(metaclass=ABCMeta):
         Returns:
             Substance instance.
         """
-        return cls(name, constituents, mode="volume", **kwargs)
+        return cls(name, composition, mode="volume", **kwargs)
 
 
     # ########
@@ -247,9 +248,9 @@ class Substance(metaclass=ABCMeta):
         return self._name
 
     @property
-    def constituents(self):
-        """Dictionary of constituents and their abundance (atomic (mole) fraction)."""
-        return self._constituents
+    def composition(self):
+        """Dictionary of constituents and their atomic (mole) fraction."""
+        return self._composition
 
     @property
     def M(self):
@@ -290,8 +291,8 @@ class Substance(metaclass=ABCMeta):
         Will return zero if calculation is not possible.
         """
 
-        if all(constituent.M > 0 for constituent in self._constituents.keys()):
-            return sum(x_i*constituent.M for constituent, x_i in self._constituents.items())
+        if all(constituent.M > 0 for constituent in self._composition.keys()):
+            return sum(x_i*constituent.M for constituent, x_i in self._composition.items())
         else:
             return 0.0
 
@@ -327,23 +328,23 @@ class Substance(metaclass=ABCMeta):
     # Conversion
     # ########
 
-    def get_constituents_in_wt(self) -> dict[Constituent, float]:
-        """Returns constituent dictionary with weight fractions."""
+    def get_composition_in_wt(self) -> dict[Constituent, float]:
+        """Returns constituents with their weight fractions."""
         
-        at_fracs = [x_i for x_i in self._constituents.values()]
-        molar_masses = [constituent.M for constituent in self._constituents.keys()]
+        at_fracs = [x_i for x_i in self._composition.values()]
+        molar_masses = [constituent.M for constituent in self._composition.keys()]
 
         wt_fracs = at_to_wt(at_fracs, molar_masses)
-        return {constituent: w_i for constituent, w_i in zip(self._constituents.keys(), wt_fracs)}
+        return {constituent: w_i for constituent, w_i in zip(self._composition.keys(), wt_fracs)}
    
-    def get_constituents_in_vol(self) -> dict[Constituent, float]:
-        """Returns constituent dictionary with volume fractions."""
+    def get_composition_in_vol(self) -> dict[Constituent, float]:
+        """Returns constituents with their volume fractions."""
         
-        at_fracs = [x_i for x_i in self._constituents.values()]
-        molar_volumes = [constituent.V_m for constituent in self._constituents.keys()]
+        at_fracs = [x_i for x_i in self._composition.values()]
+        molar_volumes = [constituent.V_m for constituent in self._composition.keys()]
 
         vol_fracs = at_to_vol(at_fracs, molar_volumes)
-        return {constituent: phi_i for constituent, phi_i in zip(self._constituents.keys(), vol_fracs)}
+        return {constituent: phi_i for constituent, phi_i in zip(self._composition.keys(), vol_fracs)}
         
 
     # ########
@@ -358,7 +359,7 @@ class Substance(metaclass=ABCMeta):
         
         Method is called upon each constituent, until `Isotope`s are extracted 
         from `Element`s. The fraction of the parent is multiplied onto the
-        fraction of the constituents. Atomic and weight fractions are possible
+        fraction of the constituent. Atomic and weight fractions are possible
         to be fetched. The `use_natural` flag will fetch a surrogate isotope 
         with appropriate mass, if the `Element` is natural.
 
@@ -377,11 +378,11 @@ class Substance(metaclass=ABCMeta):
         """
         
         if not by_weight:
-            constituents = self._constituents
+            composition = self._composition
         else:
-            constituents = self.get_constituents_in_wt()        
+            composition = self.get_composition_in_wt()        
 
-        for constituent, f_i in constituents.items():
+        for constituent, f_i in composition.items():
             constituent._append_isotopes(dict_list, by_weight, f_p*f_i, use_natural)
 
         return dict_list
@@ -419,12 +420,12 @@ class Substance(metaclass=ABCMeta):
     @classmethod
     def instance_is_allowed(cls, instance: Any) -> bool:
         """Returns, if given instane is of an allowed class (or subclass)."""
-        return isinstance(instance, cls._get_allowed_classes())
+        return isinstance(instance, cls._get_allowed_constituents())
     
     @classmethod
-    def type_is_allowed(cls, type: type) -> bool:
+    def type_is_allowed(cls, dtype: type) -> bool:
         """Returns, if given type is an allowed class."""
-        return all(type is allowed for allowed in cls._get_allowed_classes())
+        return all(dtype is allowed for allowed in cls._get_allowed_constituents())
 
 
     # ########
@@ -446,7 +447,7 @@ class Substance(metaclass=ABCMeta):
                 Get volume fraction for each node.
             scale:
                 Flag to scale each constituents fraction by its parent fraction.
-                If scaled, constituents of each parent add up to unity.
+                If scaled, the composition of each parent adds up to unity.
             align_isotopes:
                 Flag to force all isotopes at maximum depth.
         
@@ -459,19 +460,19 @@ class Substance(metaclass=ABCMeta):
             x_i, w_i, phi_i = 0.0, 0.0, 0.0
 
             substance: Substance = parent_node.content
-            constituents = list(substance.constituents.keys())
+            constituents = list(substance.composition.keys())
 
             # decide for fraction to be used
             if atomic:
-                at_fracs = list(substance._constituents.values())
+                at_fracs = list(substance._composition.values())
             if weight:
                 try:
-                    wt_fracs = list(substance.get_constituents_in_wt().values())
-                except ValueError as ex:  # constituent ahs no molar mass (unlikely)
+                    wt_fracs = list(substance.get_composition_in_wt().values())
+                except ValueError as ex:  # constituent has no molar mass
                     wt_fracs = None
             if volume:
                 try:
-                    vol_fracs = list(substance.get_constituents_in_vol().values())
+                    vol_fracs = list(substance.get_composition_in_vol().values())
                 except (ValueError, AttributeError) as ex:  # constituent has no density or is an isotope
                     vol_fracs = None
 
@@ -500,7 +501,7 @@ class Substance(metaclass=ABCMeta):
                 # create node of constituent
                 node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data)
 
-                # create child node for constituents of constituents (if applicable)
+                # create child node for constituents of constituent (if applicable)
                 if isinstance(constituent, Isotope):
                     if align_isotopes:
                         node.align_right(label_size=6)
@@ -536,7 +537,7 @@ class Substance(metaclass=ABCMeta):
                 Get volume fraction for each node.
             scale:
                 Flag to scale each constituents fraction by its parent fraction.
-                If scaled, constituents of each parent add up to unity.
+                If scaled, the composition of each parent adds up to unity.
             align_isotopes:
                 Flag to align all isotopes in one column.
             char_set:

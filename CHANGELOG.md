@@ -1,38 +1,46 @@
 
 # Changelog
 
-## Version 1.1.0 (TODO/07/2023)
+## Version 1.1.0 (18/08/2023)
 
 This updates marks a big overhaul of the code structure.
 `Element`, `Molecule` and `Mixture` now inherit from the abstract base class `Substance`.
 This will help in terms of future maintainability.
-All modules, classes, methods and constants received costrings for documentation and a more helpful API.
+Volume fractions are introduced as a possible input for `Mixture`s.
+All modules, classes, methods and constants received docstrings for documentation and a more helpful API.
 Now, all isotopes from the NIST database are implemented, increasing the available `Isotope` object count from 357 to 3355.
+Added `Node` class for easier access to hierarchical tree structure of substances.
+Furthermore, this class allows a tree structure print, that should be clearer than previous print methods.
+`Isotope`, `Substance` and all subclasses received various additional attributes and methods for enhanced functionality.
 
 
-- added docstrings (in accordance to [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html))
-	- improvements for API
-- added all possible conversion methods for atomic and weight fractions, as well as newly introduced volume fractions
+### Isotope
+
 - changes to `Isotope`:
 	- added attribute relative atomic mass `A_r`
-		- molar mass M is calculated via A_r and molar mass constant (according to 2019 redefinitions)
+		- molar mass `M` is calculated via `A_r` and molar mass constant `M_u` (according to 2019 redefinitions)
 	- added isomeric state `I`
 	- added property `ZA` (notation)
 	- added property `ZAI` (notation)
-	- name is recognised by itself, but can be overriden with `name` keyword
+	- name is not longer a positional argument in constructor and is generated automatically, but can be overriden with `name` keyword
 	- added `element_symbol()` method to get symbol of associated element
 - added all isotopes from [NIST database](https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses)
 	- total amount: 3355 isotopes
+
+
+### Substance and subclasses
+
 - `Substance` base class for maintainability
 	- unified attributes and methods where possible
 	- renaming of internal variables to consent with physical quantities
+		- attribute `constituents` is now called more appropriately `composition`
 	- added attribute for density `rho` (necessary for volume fraction conversions)
 		- can generally not be calculated and must be given explicitly during construction (as keyword argument)
 	- added attribute `symbol` for shorter names
 	- added constructor argument `mode` for "atomic", "weight" and "volume" fractions as input
 		- added dedicated constructor wrappers: `from_atomic()`, `from_weight()` and `from_volume()`
 	- constructor checks, if given constituents are allowed
-	- added methods to return composition with atomic, weight or volume fractions
+	- added methods to return compositions in weight fractions (`get_composition_in_wt()`) and volume fractions (`get_composition_in_vol()`)
 	- added properties for molar volume `V_m` and number density `n`
 		- added methods to compute those values
 	- added methods `make_node()` and `print_tree()` for querrying and printing (see class `Node` below)
@@ -57,6 +65,10 @@ Now, all isotopes from the NIST database are implemented, increasing the availab
 	- tries to calculate attribute `rho` by itself
 		- only possible if all constituents have a density given
 	- only use case for new volume fractions
+
+
+### Node
+
 - added `Node` class for easier access to hierarchical tree structure of substances
 	- access `Substance` or `Isotope` via the attribute `content`
 	- additional information, like calculated (scaled) fractions, is stored in dictionary attribute `data`
@@ -68,6 +80,14 @@ Now, all isotopes from the NIST database are implemented, increasing the availab
 	- `print_tree()` method to print tree structure as such
 		- additional `data` is printed as well
 		- successor to `print_overview()` method
+
+
+### General
+
+- added docstrings (in accordance to [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html))
+	- better documentation
+	- improvements for API
+- added all possible conversion methods for atomic and weight fractions, as well as newly introduced volume fractions
 - changed official required Python version to 3.10 (might not be necessary)
 - updated README and its tutorial to reflect changes and improvements
 - removed custom exceptions (using default ones instead) and "exceptions.py"
@@ -76,6 +96,8 @@ Now, all isotopes from the NIST database are implemented, increasing the availab
 - added volume fraction case to "validation.py"
 - added comparison tables (package *tabular*) to "validation.py"
 - ... probably lots of other stuff I've missed
+
+
 
 ## Version 1.0.2 (12/07/2023)
 
@@ -92,9 +114,11 @@ Presumably, changes for users will be limited to the `PrintOverview` method (now
 	- since dictionaries are mutable objects and Python compiles functions (and thus their default values) at the beginning, the very same dictionary is used every call, even though an empty one should be created
 	- this beahviour is described nicely in an [article by Don Cross](https://towardsdatascience.com/python-pitfall-mutable-default-arguments-9385e8265422)
 
+
+
 ## Version 1.0.1 (20/06/2023)
 
- - added conversion functions:
+- added conversion functions:
 	- percent (per hundred): `percent`, `perc`, `pc`
 	- per mille (per thousand): `permille`, `pm`
 	- per myriad (per ten thousand): `permyriad`, `bp`
@@ -104,6 +128,8 @@ Presumably, changes for users will be limited to the `PrintOverview` method (now
 	- parts-per-trillion: `ppt`
 	- parts-per-quadrillion: `ppq`
 
-	## Version 1.0.0 (14/06/2023)
+
+
+## Version 1.0.0 (14/06/2023)
 
 - initial release

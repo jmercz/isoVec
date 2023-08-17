@@ -23,25 +23,25 @@ class Element(Substance):
 
     # override
     @classmethod
-    def _get_allowed_classes(cls):
+    def _get_allowed_constituents(cls):
         return (Isotope,)
 
-    def __init__(self, name: str, isotopes: dict[Isotope, float], mode: str = "_legacy", natural: bool = False, **kwargs) -> None:
+    def __init__(self, name: str, composition: dict[Isotope, float], mode: str = "_legacy", natural: bool = False, **kwargs) -> None:
         """Constructor of element.
         
         Args:
             name:
                 Descriptive name.
-            isotopes:
+            composition:
                 Dictionary that maps an isotope of the element to its
                 fraction. The fractions are physically interpreted according
                 to the given mode. Values are normalsied and don't need to add
                 up to unity.
             mode:
-                Fractions in isotopes can be interpreted as atomic or weight
-                fractions. The default value allows inputs as before 1.1.0, 
-                where positive fractions refer to atomic and negative fractions
-                to weight.
+                Fractions in the composition can be interpreted as atomic or
+                weight fractions. The default value allows inputs as before
+                v1.1.0, where positive fractions refer to atomic and negative
+                fractions to weight.
             **kwargs:
                 Keyword arguments to override values.
         
@@ -58,13 +58,13 @@ class Element(Substance):
             not an isotope.
         """
 
-        super().__init__(name=name, constituents=isotopes, mode=mode, **kwargs)
+        super().__init__(name=name, composition=composition, mode=mode, **kwargs)
 
         self._is_natural = natural
 
         # take atomic number of first isotope (and make sure all isotopes are of the same element)
-        self._Z: int = next(iter(isotopes)).Z  # atomic number of element
-        if not all(self._Z == isotope.Z for isotope in isotopes.keys()):
+        self._Z: int = next(iter(composition)).Z  # atomic number of element
+        if not all(self._Z == isotope.Z for isotope in composition.keys()):
             raise ValueError(f"Atomic number of all isotopes of {self.__class__.__name__} \"{self._name}\" must match!")
         
         # construct symbol
@@ -74,7 +74,7 @@ class Element(Substance):
 
     # override
     @classmethod
-    def _inp_constituents_volume(cls, inp_constituents: dict[Isotope, float]) -> dict[Isotope, float]:
+    def _inp_composition_volume(cls, inp_composition: dict[Isotope, float]) -> dict[Isotope, float]:
         raise ValueError(f"Input mode 'volume' is disabled for {cls.__name__} creation.")
 
 
@@ -101,10 +101,10 @@ class Element(Substance):
         r"""Calculates relative atomic mass (atomic weight) [-] of the element.
         
         The relative atomic masses of all isotopes are weighted by their atomic
-         fraction and summed up:
+        fraction and summed up:
             $$\overline{M} = \sum_i \left( x_i \cdot A_\mathrm{r},i \right)$$
         """
-        return sum(x_i*constituent.M for constituent, x_i in self._constituents.items())
+        return sum(x_i*isotope.A_r for isotope, x_i in self._composition.items())
 
 
     # ########
@@ -115,16 +115,16 @@ class Element(Substance):
     def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]], by_weight: bool = False, f_p: float = 1.0, use_natural: bool = False) -> defaultdict[Isotope, list[float]]:
         
         if not by_weight:
-            constituents = self._constituents
+            composition = self._composition
         else:
-            constituents = self.get_constituents_in_wt()
+            composition = self.get_composition_in_wt()
 
         if use_natural and self._is_natural:
             natural_isotope = _natural_compositions[self._Z]
-            f_i = sum(constituents.values())
+            f_i = sum(composition.values())
             dict_list[natural_isotope].append(f_p*f_i)
         else:
-            for isotope, f_i in constituents.items():
+            for isotope, f_i in composition.items():
                 dict_list[isotope].append(f_p*f_i)
 
         return dict_list
@@ -164,11 +164,11 @@ class Element(Substance):
         print()
 
         # calculate weight fractions of isotopes
-        wt_constituents = self.get_constituents_in_wt()
+        wt_composition = self.get_composition_in_wt()
 
-        for i, (isotope, x_i) in enumerate(self._constituents.items(), start = 1):
+        for i, (isotope, x_i) in enumerate(self._composition.items(), start = 1):
             cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_constituents[isotope]
+            w_i = wt_composition[isotope]
 
             if scale:
                 # scale with parent fraction
