@@ -23,7 +23,7 @@ class Mixture(Substance):
 
     # override
     @classmethod
-    def _get_allowed_classes(cls):
+    def _get_allowed_constituents(cls):
         return (Mixture, Molecule, Element)
     
     def __init__(self, name: str, composition: dict[Constituent, float], mode: str = "_legacy", **kwargs) -> None:
