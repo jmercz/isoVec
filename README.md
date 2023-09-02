@@ -222,6 +222,8 @@ Ar-nat: 9.3392E-03
 Kr-nat: 1.1399E-06
 ```
 
+Another option is to supply a collection (iterable) of natural `Element` objects to the argument `use_natural`.
+This will return the elemental composition only for the given (natural) elements and the isotopic composition for the rest.
 Note that custom made elements are not subject to that behaviour, unless the keyword argument `natural=True` was specified in their constructor.
 
 
