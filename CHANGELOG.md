@@ -1,6 +1,11 @@
 
 # Changelog
 
+## Version 1.1.1 (xx/xx/2023)
+
+- added option for `get_isotopes()` to supply explicit collection of (natural) elements to be considered
+
+
 ## Version 1.1.0 (18/08/2023)
 
 This updates marks a big overhaul of the code structure.

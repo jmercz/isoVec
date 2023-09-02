@@ -7,7 +7,7 @@ Substance class serves as the (abstract) base class for `Element`, `Molecule` an
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, TypeAlias, Union, Literal
+from typing import Any, TypeAlias, Union, Literal, Iterable
 from abc import ABCMeta, abstractmethod
 
 from .constants import N_A
@@ -353,7 +353,8 @@ class Substance(metaclass=ABCMeta):
 
     def _append_isotopes(
             self, dict_list: defaultdict[Isotope, list[float]], 
-            by_weight: bool = False, f_p: float = 1.0, use_natural: bool = False
+            by_weight: bool = False, f_p: float = 1.0,
+            use_natural: bool | Iterable = False
         ) -> defaultdict[Isotope, list[float]]:
         """Appends all isotopes with their desired fraction to given dictionary.
         
@@ -372,6 +373,8 @@ class Substance(metaclass=ABCMeta):
                 Parent fraction, that is multiplied onto constituent fractions.
             use_natural:
                 Flag to use fraction of element, if it is natural.
+                Alternatively, a collection of elements can be supplied, that
+                shall be considered.
         
         Returns:
             Dictionary that maps occuring isotopes to list of their fractions
@@ -389,7 +392,7 @@ class Substance(metaclass=ABCMeta):
  
     def get_isotopes(
             self, mode: Literal["atomic", "weight"] = "atomic", 
-            use_natural: bool = False
+            use_natural: bool | Iterable = False
         ) -> dict[Isotope, float]:
         """Returns dict of all contained isotopes with their summed desired fraction.
         
@@ -398,6 +401,8 @@ class Substance(metaclass=ABCMeta):
                 Wether 'atomic' or 'weight' fractions are to be fetched.
             use_natural:
                 Flag to use fraction of element, if it is natural.
+                Alternatively, a collection of elements can be supplied, that
+                shall be considered.
         
         Returns:
             Dictionary that maps occuring isotopes to their fraction.

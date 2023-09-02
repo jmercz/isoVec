@@ -4,6 +4,7 @@ Element class serves as constituents for `Molecule`.
 """
 
 from collections import defaultdict
+from typing import Iterable
 
 from .substance import Substance
 from .isotope import Isotope
@@ -112,20 +113,36 @@ class Element(Substance):
     # ########
 
     # override
-    def _append_isotopes(self, dict_list: defaultdict[Isotope, list[float]], by_weight: bool = False, f_p: float = 1.0, use_natural: bool = False) -> defaultdict[Isotope, list[float]]:
+    def _append_isotopes(
+            self, dict_list: defaultdict[Isotope, list[float]], 
+            by_weight: bool = False, f_p: float = 1.0, 
+            use_natural: bool | Iterable = False
+        ) -> defaultdict[Isotope, list[float]]:
         
         if not by_weight:
             composition = self._composition
         else:
             composition = self.get_composition_in_wt()
 
-        if use_natural and self._is_natural:
-            natural_isotope = _natural_compositions[self._Z]
-            f_i = sum(composition.values())
-            dict_list[natural_isotope].append(f_p*f_i)
-        else:
+        # append isotopes
+        if not self._is_natural or not use_natural:
             for isotope, f_i in composition.items():
                 dict_list[isotope].append(f_p*f_i)
+            return dict_list
+    
+        if use_natural:
+            if isinstance(use_natural, Iterable):  # have to check if considered
+                if self in use_natural:  # use elemental composition
+                    natural_isotope = _natural_compositions[self._Z]
+                    f_i = sum(composition.values())
+                    dict_list[natural_isotope].append(f_p*f_i)
+                else:
+                    for isotope, f_i in composition.items():
+                        dict_list[isotope].append(f_p*f_i)
+            else:  # must be boolean true, use elemental composition
+                natural_isotope = _natural_compositions[self._Z]
+                f_i = sum(composition.values())
+                dict_list[natural_isotope].append(f_p*f_i)
 
         return dict_list
 
