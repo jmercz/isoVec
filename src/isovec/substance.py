@@ -497,6 +497,12 @@ class Substance(metaclass=ABCMeta):
                     constituent_data["phi"] = phi_i
                 if constituent.M:
                     constituent_data["M"] = constituent.M
+                    try:
+                        if constituent.M_mol:
+                            constituent_data["M_mol"] = constituent.M_mol
+                    except AttributeError as ex:
+                        pass
+
                 try:
                     if constituent.rho:
                         constituent_data["rho"] = constituent.rho
