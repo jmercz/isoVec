@@ -56,6 +56,8 @@ class Molecule(Substance):
 
         super().__init__(name=name, composition=composition, mode=mode, **kwargs)
 
+        self._M_mol = self._calc_M_mol()  # molar mass of molecule
+
         # construct symbol
         if not self._symbol:
             sym = ""
@@ -97,14 +99,19 @@ class Molecule(Substance):
         """Number of atoms in the molecule."""
         return self._atoms
     
+    @property
+    def M_mol(self):
+        """Molar mass of molecule [g mol^-1]."""
+        return self._M_mol
+    
 
     # ########
     # Quantity Calculation
     # ########
 
     # override
-    def _calc_M(self) -> float:
-        r"""Calculates molar mass.
+    def _calc_M_mol(self) -> float:
+        r"""Calculates molar mass of molecule.
         
         The molar masses of all constituents are multiplied by their number of
         atoms in the molecule and summed up:
@@ -127,6 +134,20 @@ class Molecule(Substance):
 
 
     # ########
+    # Tree
+    # ########
+
+    def _get_data_dict(self) -> dict:
+        """Dictionary with data of molecule."""
+
+        data = super()._get_data_dict()
+        if self._M_mol:
+            data["M_mol"] = self._M_mol
+
+        return data
+
+
+    # ########
     # Print
     # ########
 
@@ -146,7 +167,7 @@ class Molecule(Substance):
         x_p = kwargs.get("x_p", 1.0)
         w_p = kwargs.get("w_p", 1.0)
 
-        print("{0} Molecule \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
+        print("{0} Molecule \"{1}\": {2:.4f} g/mol ({3:.4f} g/mol)".format(numbering_str, self._name, self._M, self._M_mol))
         print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
 
         wt_composition = self.get_composition_in_wt()

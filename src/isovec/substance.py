@@ -74,7 +74,7 @@ class Substance(metaclass=ABCMeta):
 
         self._name = name                             # name of the substance
         self._composition: dict[Constituent, float]   # {constituent: atomic (mole) fraction}
-        self._M: float                                # molar mass [g mol^-1]
+        self._M: float                                # average molar mass [g mol^-1]
         self._rho: float                              # density [g cm^-3]
         self._symbol: str                             # symbol of the substance
 
@@ -254,7 +254,7 @@ class Substance(metaclass=ABCMeta):
 
     @property
     def M(self):
-        """Molar mass [g mol^-1]."""
+        """Average molar mass [g mol^-1]."""
         return self._M
     
     @property
@@ -514,17 +514,25 @@ class Substance(metaclass=ABCMeta):
                     add_constituents(parent_node=node, x_p=x_i, w_p=w_i, phi_p=phi_i)
 
         # create data dictionary
-        root_data = {}
-        if self._M:
-            root_data["M"] = self._M
-        if self._rho:
-            root_data["rho"] = self._rho
+        root_data = self._get_data_dict()
 
         # create root node and start recursive hierarchy construction
         root = Node(label=str(self), content=self, data=root_data)
         add_constituents(parent_node=root)
 
         return root
+    
+    def _get_data_dict(self) -> dict:
+        """Dictionary with data of substance."""
+
+        data = {}
+        if self._M:
+            data["M"] = self._M
+        if self._rho:
+            data["rho"] = self._rho
+
+        return data
+
 
     def print_tree(
             self, atomic: bool = True, weight: bool = False, volume: bool = False, *,

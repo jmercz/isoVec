@@ -5,6 +5,52 @@ from tabulate import tabulate
 
 from src import isovec as iso
 
+def _compare_converted_isotopes(substance: iso.Substance) -> dict[str, list[float]]:
+        """Debug function to test consistency of fraction modes.
+        
+        Gets isotopes of substance via "atomic" and "weight" mode, then converts
+        each case and compares the atomic and weight fractions from each case
+        respectively. For correct behaviour, differences should approach zero.
+        """
+
+        print("#######################")
+        print("  Get isotopes in atomic fraction:")
+        tmp = substance.get_isotopes(mode="atomic", use_natural=(iso.C_nat,))
+        iso_with_at = tmp.keys()
+        iso_at = list(tmp.values())
+        iso_at_to_wt = iso.at_to_wt(at_fracs=iso_at, molar_masses=[isotope.M for isotope in iso_with_at])
+        print(f"Isotope |          at.%  |          wt.%")
+        for i, isotope in enumerate(iso_with_at):
+            print(f"{isotope.name:>6}  |  {iso_at[i]:12.10f}  |  {iso_at_to_wt[i]:12.10f}")
+        
+        print("#######################")
+        print("  Get isotopes in weight fraction:")
+        tmp = substance.get_isotopes(mode="weight", use_natural=(iso.C_nat,))
+        iso_with_wt = tmp.keys()
+        iso_wt = list(tmp.values())
+        iso_wt_to_at = iso.wt_to_at(wt_fracs=iso_wt, molar_masses=[isotope.M for isotope in iso_with_wt])
+        print(f"Isotope |          at.%  |          wt.%")
+        for i, isotope in enumerate(iso_with_wt):
+            print(f"{isotope.name:>6}  |  {iso_wt_to_at[i]:12.10f}  |  {iso_wt[i]:12.10f}")
+        
+        
+        print("#######################")
+        print("  Difference:")
+        differences = {"at": [], "wt": []}
+        print(f"Isotope |              at.%  |              wt.%")
+        for i, isotope in enumerate(iso_with_wt):
+
+            cur_dif_at = iso_at[i]-iso_wt_to_at[i]
+            differences["at"].append(cur_dif_at)
+
+            cur_dif_wt = iso_at_to_wt[i]-iso_wt[i]
+            differences["wt"].append(cur_dif_wt)
+
+            print(f"{isotope.name:>6}  |  {cur_dif_at: 12.9e}  |  {cur_dif_wt: 12.9e}")
+        print("#######################")
+
+        return differences
+
 
 if __name__ == "__main__":
 
