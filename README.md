@@ -200,7 +200,7 @@ yields the final isotope vector:
 
 #### Natural Element Composition
 
-By setting the `get_isotopes()` keyword argument `use_natural=True`, a surrogate `Isotope` object is added to the list instead, if the `Element` object is one of the implemented natural elements. This surrogate object represents an element with natural occuring abundance. Since only natural elements were used in this tutorial, the following code:
+By setting the `get_isotopes()` keyword argument `use_natural=True`, a surrogate `Isotope` object is added to the list instead, if the `Element` object is one of the implemented natural elements. This surrogate object represents an element with natural occuring abundance. While the argument `True` applies this behaviour to all applicable elements (and `False` to none), the user can also pass a collection of `Element` objects, that should be considered for that behaviour. Since only natural elements were used in this tutorial, the following code:
 
 ```python
 isotope_vector = air.get_isotopes(mode="atomic", use_natural=True)
