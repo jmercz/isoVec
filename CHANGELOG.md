@@ -1,6 +1,14 @@
 
 # Changelog
 
+## Version 1.1.1.1 (16/10/2023)
+
+- fixed problem with tree plotting of molecules, that lead to wrong atomic isotope vectors
+	- changed molar mass of molecule to average molar mass (as other substances)
+	- added molar mass of molecule (is calculated as before)
+	- added `_get_data_dict()` to `Substance` (and `Molecule`) for more flexibility in tree plotting
+- added option for `get_isotopes()` to supply explicit collection of (natural) elements to be considered
+
 ## Version 1.1.1 (16/10/2023)
 
 - fixed problem with molar mass of molecules, that lead to wrong atomic isotope vectors
