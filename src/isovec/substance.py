@@ -585,3 +585,59 @@ class Substance(metaclass=ABCMeta):
             return self._name == other._name
         else:
             return NotImplemented
+        
+
+    # ########
+    # Debug
+    # ########
+    
+    def _compare_converted_isotopes(self) -> dict[str, list[float]]:
+        """Debug function to test consistency of fraction modes.
+        
+        Gets isotopes of substance via "atomic" and "weight" mode, then converts
+        each case and compares the atomic and weight fractions from each case
+        respectively. For correct behaviour, differences should approach zero.
+        """
+
+        # extract isotopes in atomic mode and convert to weight
+        tmp = self.get_isotopes(mode="atomic")
+        iso_with_at = tmp.keys()
+        direct_at = list(tmp.values())
+        conv_wt = at_to_wt(at_fracs=direct_at, molar_masses=[isotope.M for isotope in iso_with_at])
+
+        # extract isotopes in weight mode and convert to atomic
+        tmp = self.get_isotopes(mode="weight")
+        iso_with_wt = tmp.keys()
+        direct_wt = list(tmp.values())
+        conv_at = wt_to_at(wt_fracs=direct_wt, molar_masses=[isotope.M for isotope in iso_with_wt])
+
+        assert(iso_with_at == iso_with_wt)
+
+        differences = defaultdict(list)
+
+        # print for atomic percent
+        print(f"Isotope |   direct at.%  | converted at.%  |  difference at.% (relative difference)")
+        for i, isotope in enumerate(iso_with_at):
+            dir = direct_at[i]
+            conv = conv_at[i]
+            dif = dir - conv
+            dif_rel = dif / dir
+            print(f"{isotope.name:>6} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            differences["at"].append(dif)
+            differences["rel_at"].append(dif_rel)
+
+        print()
+
+        # print for weight percent
+        print(f"Isotope |   direct wt.%  | converted wt.%  |  difference wt.% (relative difference)")
+        for i, isotope in enumerate(iso_with_wt):
+            dir = direct_wt[i]
+            conv = conv_wt[i]
+            dif = dir - conv
+            dif_rel = dif / dir
+            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            differences["wt"].append(dif)
+            differences["rel_wt"].append(dif_rel)
+        
+
+        return differences
