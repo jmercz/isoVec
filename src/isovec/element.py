@@ -109,7 +109,7 @@ class Element(Substance):
 
 
     # ########
-    # Isotope Collection
+    # Collection
     # ########
 
     # override
@@ -145,6 +145,13 @@ class Element(Substance):
                 dict_list[natural_isotope].append(f_p*f_i)
 
         return dict_list
+    
+    # override
+    def _append_elements(self, element_list: list, by_weight: bool = False, f_p: float = 1.0):
+
+        element_list.append((f_p, self))
+
+        return element_list
 
 
     # ########
@@ -193,3 +200,59 @@ class Element(Substance):
                 w_i = w_p * w_i
             
             print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(cur_num_str, isotope._name + ":", x_i*1e2, w_i*1e2))
+
+
+    # ########
+    # Operators
+    # ########
+    
+    def __hash__(self):
+        #return hash((self.__class__, self._name))
+        return hash((self.__class__, self._Z, self._M))
+
+    def __eq__(self, other):
+        try:
+            if (self._Z == other._Z) and (self._M == other._M):
+                return True
+            else:
+                return False
+        except:
+            return NotImplemented
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        try:
+            if self._Z < other._Z:
+                return True
+            elif self._Z == other._Z:
+                if self._M < other._M:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except:
+            return NotImplemented
+
+    def __le__(self, other):
+        return self.__lt__(other) or self.__eq__(other)
+
+
+    def __gt__(self, other):
+        try:
+            if self._Z > other._Z:
+                return True
+            elif self._Z == other._Z:
+                if self._M > other._M:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except:
+            return NotImplemented
+
+    def __ge__(self, other):
+        return self.__gt__(other) or self.__eq__(other)

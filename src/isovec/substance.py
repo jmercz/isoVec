@@ -348,7 +348,7 @@ class Substance(metaclass=ABCMeta):
         
 
     # ########
-    # Isotope Collection
+    # Collection
     # ########
 
     def _append_isotopes(
@@ -389,6 +389,18 @@ class Substance(metaclass=ABCMeta):
             constituent._append_isotopes(dict_list, by_weight, f_p*f_i, use_natural)
 
         return dict_list
+    
+    def _append_elements(self, element_list: list, by_weight: bool = False, f_p: float = 1.0,):
+
+        if not by_weight:
+            composition = self._composition
+        else:
+            composition = self.get_composition_in_wt()  
+        
+        for constituent, f_i in composition.items():
+            constituent._append_elements(element_list, by_weight, f_p*f_i)
+
+        return element_list
  
     def get_isotopes(
             self, mode: Literal["atomic", "weight"] = "atomic", 
@@ -416,6 +428,43 @@ class Substance(metaclass=ABCMeta):
             raise ValueError(f"Mode \"{mode}\" not supported for gathering isotopes.")
         
         return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
+
+    def get_elements(self, mode: Literal["atomic", "weight"] = "atomic"):
+
+        if mode in {"atomic", "at", "mole", "mol"}:
+            gathered_elements = self._append_elements([], by_weight=False)
+        elif mode in {"weight", "wt"}:
+            gathered_elements = self._append_elements([], by_weight=True)
+        else:
+            raise ValueError(f"Mode \"{mode}\" not supported for gathering elements.")
+        
+        fractions, elements = list(map(list, zip(*gathered_elements)))
+        norm_tmp = sum(fractions)
+        fractions = [fraction/norm_tmp for fraction in fractions]
+
+        return [(fraction, element) for fraction, element in sorted(zip(fractions, elements), key=lambda pair: pair[1])]
+    
+    def get_isotopes2(
+            self, mode: Literal["atomic", "weight"] = "atomic", 
+            use_natural: bool | Iterable = False
+        ) -> dict[Isotope, float]:
+        
+        elements = self.get_elements(mode)
+
+        gathered_isotopes = defaultdict(list)
+
+        if mode=="atomic":
+            for elem_fraction, element in elements:
+                for isotope, iso_frac in element._composition.items():
+                    gathered_isotopes[isotope].append(elem_fraction*iso_frac)
+        else:
+            for elem_fraction, element in elements:
+                for isotope, iso_frac in element.get_composition_in_wt().items():
+                    gathered_isotopes[isotope].append(elem_fraction*iso_frac)
+        
+        return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
+
+
         
 
     # ########
@@ -622,7 +671,58 @@ class Substance(metaclass=ABCMeta):
             conv = conv_at[i]
             dif = dir - conv
             dif_rel = dif / dir
-            print(f"{isotope.name:>6} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            differences["at"].append(dif)
+            differences["rel_at"].append(dif_rel)
+
+        print()
+
+        # print for weight percent
+        print(f"Isotope |   direct wt.%  | converted wt.%  |  difference wt.% (relative difference)")
+        for i, isotope in enumerate(iso_with_wt):
+            dir = direct_wt[i]
+            conv = conv_wt[i]
+            dif = dir - conv
+            dif_rel = dif / dir
+            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            differences["wt"].append(dif)
+            differences["rel_wt"].append(dif_rel)
+        
+
+        return differences
+    
+    def _compare_converted_isotopes2(self) -> dict[str, list[float]]:
+        """Debug function to test consistency of fraction modes.
+        
+        Gets isotopes of substance via "atomic" and "weight" mode, then converts
+        each case and compares the atomic and weight fractions from each case
+        respectively. For correct behaviour, differences should approach zero.
+        """
+
+        # extract isotopes in atomic mode and convert to weight
+        tmp = self.get_isotopes2(mode="atomic")
+        iso_with_at = tmp.keys()
+        direct_at = list(tmp.values())
+        conv_wt = at_to_wt(at_fracs=direct_at, molar_masses=[isotope.M for isotope in iso_with_at])
+
+        # extract isotopes in weight mode and convert to atomic
+        tmp = self.get_isotopes2(mode="weight")
+        iso_with_wt = tmp.keys()
+        direct_wt = list(tmp.values())
+        conv_at = wt_to_at(wt_fracs=direct_wt, molar_masses=[isotope.M for isotope in iso_with_wt])
+
+        assert(iso_with_at == iso_with_wt)
+
+        differences = defaultdict(list)
+
+        # print for atomic percent
+        print(f"Isotope |   direct at.%  | converted at.%  |  difference at.% (relative difference)")
+        for i, isotope in enumerate(iso_with_at):
+            dir = direct_at[i]
+            conv = conv_at[i]
+            dif = dir - conv
+            dif_rel = dif / dir
+            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
             differences["at"].append(dif)
             differences["rel_at"].append(dif_rel)
 

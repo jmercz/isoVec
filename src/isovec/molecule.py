@@ -59,7 +59,7 @@ class Molecule(Substance):
         # construct symbol
         if not self._symbol:
             sym = ""
-            for element, atoms in self.get_constituent_in_atoms().items():
+            for element, atoms in self.get_composition_in_atoms().items():
                 sym += f"{element.element_symbol()}"
                 if atoms > 1:
                     sym += f"{atoms:.2g}"
@@ -112,7 +112,7 @@ class Molecule(Substance):
         Will return zero if calculation is not possible.
         """
         if all(constituent.M > 0 for constituent in self._composition.keys()):
-            return sum(N_i*constituent.M for constituent, N_i in self.get_constituent_in_atoms().items())
+            return sum(N_i*constituent.M for constituent, N_i in self.get_composition_in_atoms().items())
         else:
             return 0.0
 
@@ -121,9 +121,26 @@ class Molecule(Substance):
     # Conversion
     # ########
 
-    def get_constituent_in_atoms(self) -> dict[Element, float]:
+    def get_composition_in_atoms(self) -> dict[Element, float]:
         """Returns constituents with their number of atoms."""
         return {element: int(x_i*self._atoms) for element, x_i in self._composition.items()}
+
+
+    # ########
+    # Collection
+    # ########
+
+    def _append_elements(self, element_list: list, by_weight: bool = False, f_p: float = 1.0,):
+
+        if not by_weight:
+            composition = self.get_composition_in_atoms()
+        else:
+            composition = self.get_composition_in_wt()  
+        
+        for constituent, f_i in composition.items():
+            constituent._append_elements(element_list, by_weight, f_p*f_i)
+
+        return element_list
 
 
     # ########
