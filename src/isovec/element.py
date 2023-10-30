@@ -112,7 +112,6 @@ class Element(Substance):
     # Collection
     # ########
 
-    # override
     def _append_isotopes(
             self, dict_list: defaultdict[Isotope, list[float]], 
             by_weight: bool = False, f_p: float = 1.0, 
@@ -147,9 +146,10 @@ class Element(Substance):
         return dict_list
     
     # override
-    def _append_elements(self, element_list: list, by_weight: bool = False, f_p: float = 1.0):
+    def _append_elements(self, element_list: dict, by_weight: bool = False, f_p: float = 1.0, parent: Substance = None):
 
-        element_list.append((f_p, self))
+        id = hash((parent, f_p, self))
+        element_list[id] = (self, f_p)
 
         return element_list
 

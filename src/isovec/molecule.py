@@ -130,7 +130,8 @@ class Molecule(Substance):
     # Collection
     # ########
 
-    def _append_elements(self, element_list: list, by_weight: bool = False, f_p: float = 1.0,):
+    # override
+    def _append_elements(self, element_list: dict[int, tuple[Substance, float]], by_weight: bool = False, f_p: float = 1.0, parent: Substance = None):
 
         if not by_weight:
             composition = self.get_composition_in_atoms()
@@ -138,7 +139,7 @@ class Molecule(Substance):
             composition = self.get_composition_in_wt()  
         
         for constituent, f_i in composition.items():
-            constituent._append_elements(element_list, by_weight, f_p*f_i)
+            constituent._append_elements(element_list, by_weight, f_p*f_i, self)
 
         return element_list
 

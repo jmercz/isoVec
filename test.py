@@ -33,8 +33,8 @@ matrix_mixture = iso.Mixture("matrix", {
     iso.U_nat: 0.5
 }, mode=mixture_mode)
 
-tmp_mol = matrix_molecule.get_elements(mode="weight")
-tmp_mix = matrix_mixture.get_elements(mode="weight")
+tmp_mol = matrix_molecule.get_elements(mode="atomic")
+tmp_mix = matrix_mixture.get_elements(mode="atomic")
 
 
 ## old, with molecule (NOT correct)

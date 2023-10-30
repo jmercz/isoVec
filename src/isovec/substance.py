@@ -390,7 +390,33 @@ class Substance(metaclass=ABCMeta):
 
         return dict_list
     
-    def _append_elements(self, element_list: list, by_weight: bool = False, f_p: float = 1.0,):
+    def _append_elements(
+            self, element_list: dict[int, tuple[Substance, float]],
+            by_weight: bool = False, f_p: float = 1.0,
+            parent: Substance = None
+        ) -> dict[int, tuple[Substance, float]]:
+        """Collects all contained elements.
+        
+        Method is called upon each constituent, until `Element`s are extracted.
+        The fraction of the parent is multiplied onto the
+        fraction of the constituent. Atomic and weight fractions are possible
+        to be fetched. The element, its parent and the fraction of the element
+        in the parent are used to generate a (unique) id. Fractions need to be
+        normalised.
+
+        Args:
+            element_list:
+                Container that collects all elements. Gets passed downwards.
+            by_weight:
+                Flag to fetch weight fractions of constituents.
+            f_p:
+                Parent fraction, that is multiplied onto constituent fractions.
+            parent:
+                Parent object used for generating id.
+        
+        Returns:
+            Dictionary that maps id to element with its fraction
+        """
 
         if not by_weight:
             composition = self._composition
@@ -398,9 +424,37 @@ class Substance(metaclass=ABCMeta):
             composition = self.get_composition_in_wt()  
         
         for constituent, f_i in composition.items():
-            constituent._append_elements(element_list, by_weight, f_p*f_i)
+            constituent._append_elements(element_list, by_weight, f_p*f_i, self)
 
         return element_list
+    
+    def _elemental_composition(
+            self, mode: Literal["atomic", "weight"] = "atomic"
+        ) -> dict[int, tuple[Substance, float]]:
+        """Collects all contained elements with their normalised fraction.
+        
+        Args:
+            mode:
+                Wether 'atomic' or 'weight' fractions are to be fetched.
+            
+        Returns:
+            Dictionary that maps id to element with its fraction
+        """
+
+        # get raw elemental composition
+        if mode in {"atomic", "at", "mole", "mol"}:
+            gathered_elements = self._append_elements(dict(), by_weight=False)
+        elif mode in {"weight", "wt"}:
+            gathered_elements = self._append_elements(dict(), by_weight=True)
+        else:
+            raise ValueError(f"Mode \"{mode}\" not supported for gathering elements.")
+        
+        # get sum for normalisation
+        _, fractions = list(map(list, zip(*gathered_elements.values())))
+        norm_tmp = sum(fractions)
+        
+        return {ident: (element, fraction/norm_tmp) for ident, (element, fraction) in gathered_elements.items()}
+        
  
     def get_isotopes(
             self, mode: Literal["atomic", "weight"] = "atomic", 
@@ -430,40 +484,54 @@ class Substance(metaclass=ABCMeta):
         return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
 
     def get_elements(self, mode: Literal["atomic", "weight"] = "atomic"):
-
-        if mode in {"atomic", "at", "mole", "mol"}:
-            gathered_elements = self._append_elements([], by_weight=False)
-        elif mode in {"weight", "wt"}:
-            gathered_elements = self._append_elements([], by_weight=True)
-        else:
-            raise ValueError(f"Mode \"{mode}\" not supported for gathering elements.")
+        """Returns dict of all contained elements with their summed desired fraction.
         
-        fractions, elements = list(map(list, zip(*gathered_elements)))
-        norm_tmp = sum(fractions)
-        fractions = [fraction/norm_tmp for fraction in fractions]
+        Args:
+            mode:
+                Wether 'atomic' or 'weight' fractions are to be fetched.
+        
+        Returns:
+            Dictionary that maps occuring elements to their fraction.
+        """
 
-        return [(fraction, element) for fraction, element in sorted(zip(fractions, elements), key=lambda pair: pair[1])]
+        gathered_elements = self._elemental_composition(mode)
+        
+        elements = defaultdict(list)
+        for element, fraction in gathered_elements.values():
+            elements[element].append(fraction)
+
+        return {element: sum(fracs) for element, fracs in sorted(elements.items())}
     
     def get_isotopes2(
             self, mode: Literal["atomic", "weight"] = "atomic", 
             use_natural: bool | Iterable = False
         ) -> dict[Isotope, float]:
+        """Returns dict of all contained isotopes with their summed desired fraction.
+        
+        Args:
+            mode:
+                Wether 'atomic' or 'weight' fractions are to be fetched.
+            use_natural:
+                Flag to use fraction of element, if it is natural.
+                Alternatively, a collection of elements can be supplied, that
+                shall be considered.
+        
+        Returns:
+            Dictionary that maps occuring isotopes to their fraction.
+        """
         
         elements = self.get_elements(mode)
 
-        gathered_isotopes = defaultdict(list)
-
-        if mode=="atomic":
-            for elem_fraction, element in elements:
-                for isotope, iso_frac in element._composition.items():
-                    gathered_isotopes[isotope].append(elem_fraction*iso_frac)
+        if mode in {"weight", "wt"}:
+            by_weight =  True
         else:
-            for elem_fraction, element in elements:
-                for isotope, iso_frac in element.get_composition_in_wt().items():
-                    gathered_isotopes[isotope].append(elem_fraction*iso_frac)
+            by_weight =  False
+
+        gathered_isotopes = defaultdict(list)
+        for element, fraction in elements.items():
+            element._append_isotopes(gathered_isotopes, by_weight, fraction, use_natural)
         
         return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
-
 
         
 
