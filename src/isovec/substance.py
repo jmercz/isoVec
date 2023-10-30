@@ -350,45 +350,6 @@ class Substance(metaclass=ABCMeta):
     # ########
     # Collection
     # ########
-
-    def _append_isotopes(
-            self, dict_list: defaultdict[Isotope, list[float]], 
-            by_weight: bool = False, f_p: float = 1.0,
-            use_natural: bool | Iterable = False
-        ) -> defaultdict[Isotope, list[float]]:
-        """Appends all isotopes with their desired fraction to given dictionary.
-        
-        Method is called upon each constituent, until `Isotope`s are extracted 
-        from `Element`s. The fraction of the parent is multiplied onto the
-        fraction of the constituent. Atomic and weight fractions are possible
-        to be fetched. The `use_natural` flag will fetch a surrogate isotope 
-        with appropriate mass, if the `Element` is natural.
-
-        Args:
-            dict_list:
-                Container that collects all isotopes. Gets passed downwards.
-            by_weight:
-                Flag to fetch weight fractions of constituents.
-            f_p:
-                Parent fraction, that is multiplied onto constituent fractions.
-            use_natural:
-                Flag to use fraction of element, if it is natural.
-                Alternatively, a collection of elements can be supplied, that
-                shall be considered.
-        
-        Returns:
-            Dictionary that maps occuring isotopes to list of their fractions
-        """
-        
-        if not by_weight:
-            composition = self._composition
-        else:
-            composition = self.get_composition_in_wt()        
-
-        for constituent, f_i in composition.items():
-            constituent._append_isotopes(dict_list, by_weight, f_p*f_i, use_natural)
-
-        return dict_list
     
     def _append_elements(
             self, element_list: dict[int, tuple[Substance, float]],
@@ -454,34 +415,6 @@ class Substance(metaclass=ABCMeta):
         norm_tmp = sum(fractions)
         
         return {ident: (element, fraction/norm_tmp) for ident, (element, fraction) in gathered_elements.items()}
-        
- 
-    def get_isotopes(
-            self, mode: Literal["atomic", "weight"] = "atomic", 
-            use_natural: bool | Iterable = False
-        ) -> dict[Isotope, float]:
-        """Returns dict of all contained isotopes with their summed desired fraction.
-        
-        Args:
-            mode:
-                Wether 'atomic' or 'weight' fractions are to be fetched.
-            use_natural:
-                Flag to use fraction of element, if it is natural.
-                Alternatively, a collection of elements can be supplied, that
-                shall be considered.
-        
-        Returns:
-            Dictionary that maps occuring isotopes to their fraction.
-        """
-        
-        if mode in {"atomic", "at", "mole", "mol"}:
-            gathered_isotopes = self._append_isotopes(defaultdict(list), by_weight=False, use_natural=use_natural)
-        elif mode in {"weight", "wt"}:
-            gathered_isotopes = self._append_isotopes(defaultdict(list), by_weight=True, use_natural=use_natural)
-        else:
-            raise ValueError(f"Mode \"{mode}\" not supported for gathering isotopes.")
-        
-        return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
 
     def get_elements(self, mode: Literal["atomic", "weight"] = "atomic"):
         """Returns dict of all contained elements with their summed desired fraction.
@@ -502,7 +435,7 @@ class Substance(metaclass=ABCMeta):
 
         return {element: sum(fracs) for element, fracs in sorted(elements.items())}
     
-    def get_isotopes2(
+    def get_isotopes(
             self, mode: Literal["atomic", "weight"] = "atomic", 
             use_natural: bool | Iterable = False
         ) -> dict[Isotope, float]:
@@ -534,7 +467,6 @@ class Substance(metaclass=ABCMeta):
         return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
 
         
-
     # ########
     # Functions
     # ########
@@ -759,53 +691,3 @@ class Substance(metaclass=ABCMeta):
 
         return differences
     
-    def _compare_converted_isotopes2(self) -> dict[str, list[float]]:
-        """Debug function to test consistency of fraction modes.
-        
-        Gets isotopes of substance via "atomic" and "weight" mode, then converts
-        each case and compares the atomic and weight fractions from each case
-        respectively. For correct behaviour, differences should approach zero.
-        """
-
-        # extract isotopes in atomic mode and convert to weight
-        tmp = self.get_isotopes2(mode="atomic")
-        iso_with_at = tmp.keys()
-        direct_at = list(tmp.values())
-        conv_wt = at_to_wt(at_fracs=direct_at, molar_masses=[isotope.M for isotope in iso_with_at])
-
-        # extract isotopes in weight mode and convert to atomic
-        tmp = self.get_isotopes2(mode="weight")
-        iso_with_wt = tmp.keys()
-        direct_wt = list(tmp.values())
-        conv_at = wt_to_at(wt_fracs=direct_wt, molar_masses=[isotope.M for isotope in iso_with_wt])
-
-        assert(iso_with_at == iso_with_wt)
-
-        differences = defaultdict(list)
-
-        # print for atomic percent
-        print(f"Isotope |   direct at.%  | converted at.%  |  difference at.% (relative difference)")
-        for i, isotope in enumerate(iso_with_at):
-            dir = direct_at[i]
-            conv = conv_at[i]
-            dif = dir - conv
-            dif_rel = dif / dir
-            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
-            differences["at"].append(dif)
-            differences["rel_at"].append(dif_rel)
-
-        print()
-
-        # print for weight percent
-        print(f"Isotope |   direct wt.%  | converted wt.%  |  difference wt.% (relative difference)")
-        for i, isotope in enumerate(iso_with_wt):
-            dir = direct_wt[i]
-            conv = conv_wt[i]
-            dif = dir - conv
-            dif_rel = dif / dir
-            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
-            differences["wt"].append(dif)
-            differences["rel_wt"].append(dif_rel)
-        
-
-        return differences

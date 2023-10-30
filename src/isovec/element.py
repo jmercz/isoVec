@@ -117,6 +117,28 @@ class Element(Substance):
             by_weight: bool = False, f_p: float = 1.0, 
             use_natural: bool | Iterable = False
         ) -> defaultdict[Isotope, list[float]]:
+        """Appends all isotopes with their desired fraction to given dictionary.
+        
+        The fraction of the element is multiplied onto the fraction of the
+        isotope. Atomic and weight fractions are possible to be fetched.
+        The `use_natural` flag will fetch a surrogate isotope with appropriate
+        mass, if the `Element` is natural.
+
+        Args:
+            dict_list:
+                Container that collects all isotopes. Gets passed downwards.
+            by_weight:
+                Flag to fetch weight fractions of constituents.
+            f_p:
+                Parent fraction, that is multiplied onto constituent fractions.
+            use_natural:
+                Flag to use fraction of element, if it is natural.
+                Alternatively, a collection of elements can be supplied, that
+                shall be considered.
+        
+        Returns:
+            Dictionary that maps occuring isotopes to list of their fractions
+        """
         
         if not by_weight:
             composition = self._composition
