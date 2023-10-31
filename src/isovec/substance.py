@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, TypeAlias, Union, Literal, Iterable
 from abc import ABCMeta, abstractmethod
+import logging
 
 from .constants import N_A
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
@@ -37,6 +38,7 @@ class Substance(metaclass=ABCMeta):
         return NotImplementedError
     
     _NORMALISE = True  # normalisation of atomic fractions
+    _RIGHT_ALIGN_PREF = None  # right alignment preference of substance in tree prints
 
     @abstractmethod
     def __init__(self, name: str, composition: dict[Constituent, float], mode: str = "_legacy", **kwargs) -> None:
@@ -487,8 +489,7 @@ class Substance(metaclass=ABCMeta):
     # ########        
 
     def make_node(
-            self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
-            scale: bool = True, align_isotopes: bool = True
+            self, atomic: bool = True, weight: bool = False, volume: bool = False
         ) -> Node:
         """Creates a hierarchical node structure with instance as the root.
         
@@ -499,19 +500,12 @@ class Substance(metaclass=ABCMeta):
                 Get weight fraction for each node.
             volume:
                 Get volume fraction for each node.
-            scale:
-                Flag to scale each constituents fraction by its parent fraction.
-                If scaled, the composition of each parent adds up to unity.
-            align_isotopes:
-                Flag to force all isotopes at maximum depth.
         
         Returns:
             Node structure with instance as root.
         """
 
-        def add_constituents(parent_node: Node, x_p: float = 1.0, w_p: float = 1.0, phi_p: float = 1.0):
-
-            x_i, w_i, phi_i = 0.0, 0.0, 0.0
+        def add_constituents(parent_node: Node):
 
             substance: Substance = parent_node.content
             constituents = list(substance.composition.keys())
@@ -536,14 +530,11 @@ class Substance(metaclass=ABCMeta):
                 # create data dictionary
                 constituent_data = {}
                 if atomic:
-                    x_i = at_fracs[i] * x_p if scale else at_fracs[i]
-                    constituent_data["x"] = x_i
+                    constituent_data["x"] = at_fracs[i]
                 if weight and wt_fracs:
-                    w_i = wt_fracs[i] * w_p if scale else wt_fracs[i]
-                    constituent_data["w"] = w_i
+                    constituent_data["w"] = wt_fracs[i]
                 if volume and vol_fracs:
-                    phi_i = vol_fracs[i] * phi_p if scale else vol_fracs[i]
-                    constituent_data["phi"] = phi_i
+                    constituent_data["phi"] = vol_fracs[i]
                 if constituent.M:
                     constituent_data["M"] = constituent.M
                 try:
@@ -557,10 +548,9 @@ class Substance(metaclass=ABCMeta):
 
                 # create child node for constituents of constituent (if applicable)
                 if isinstance(constituent, Isotope):
-                    if align_isotopes:
-                        node.align_right(label_size=6)
+                    continue
                 else:
-                    add_constituents(parent_node=node, x_p=x_i, w_p=w_i, phi_p=phi_i)
+                    add_constituents(parent_node=node)
 
         # create data dictionary
         root_data = {}
@@ -574,10 +564,96 @@ class Substance(metaclass=ABCMeta):
         add_constituents(parent_node=root)
 
         return root
+    
+    def make_node2(
+            self, atomic: bool = True, weight: bool = False
+        ) -> Node:
+        """Creates a hierarchical node structure with instance as the root.
+        
+        Args:
+            atomic:
+                Get atomic (mole) fraction for each node.
+            weight:
+                Get weight fraction for each node.
+            volume:
+                Get volume fraction for each node.
+        
+        Returns:
+            Node structure with instance as root.
+        """
+
+        def add_constituents(parent_node: Node):
+
+            substance: Substance = parent_node.content
+            constituents = list(substance.composition.keys())
+
+            # decide for fraction to be used
+            if atomic:
+                at_fracs = list(substance._composition.values())
+            if weight:
+                try:
+                    wt_fracs = list(substance.get_composition_in_wt().values())
+                except ValueError as ex:  # constituent has no molar mass
+                    wt_fracs = None
+
+            for i, constituent in enumerate(constituents):
+                
+                # create data dictionary
+                constituent_data = {}
+                if atomic:
+                    try:
+                        id = hash((substance, at_fracs[i], constituent))
+                        constituent_data["x"] = elemental_atomic[id][1]
+                        logging.debug(f"found {substance.name} with {at_fracs[i]} of {constituent.name} in atomic dict")
+                    except KeyError:
+                        logging.debug(f"DIDN'T found {substance.name} with {at_fracs[i]} of {constituent.name} in atomic dict")
+                        pass
+                if weight and wt_fracs:
+                    try:
+                        id = hash((substance, wt_fracs[i], constituent))
+                        constituent_data["w"] = elemental_weight[id][1]
+                        logging.debug(f"found {substance.name} with {wt_fracs[i]} of {constituent.name} in weight dict")
+                    except KeyError:
+                        logging.debug(f"DIDN'T found {substance.name} with {wt_fracs[i]} of {constituent.name} in weight dict")
+                        pass
+                if constituent.M:
+                    constituent_data["M"] = constituent.M
+                try:
+                    if constituent.rho:
+                        constituent_data["rho"] = constituent.rho
+                except AttributeError as ex:
+                    pass
+
+                # create node of constituent
+                node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data)
+
+                # create child node for constituents of constituent (if applicable)
+                if isinstance(constituent, Isotope):
+                    node.align_right(level=-1, label_size=6)
+                else:
+                    node.align_right(level=constituent._RIGHT_ALIGN_PREF)
+                    add_constituents(parent_node=node)
+
+        # create data dictionary
+        root_data = {}
+        if self._M:
+            root_data["M"] = self._M
+        if self._rho:
+            root_data["rho"] = self._rho
+
+        logging.debug("create dict in atomic mode")
+        elemental_atomic = self._elemental_composition(mode="atomic") if atomic else None
+        logging.debug("create dict in weight mode")
+        elemental_weight = self._elemental_composition(mode="weight") if weight else None
+
+        # create root node and start recursive hierarchy construction
+        root = Node(label=str(self), content=self, data=root_data)
+        add_constituents(parent_node=root)
+
+        return root
 
     def print_tree(
             self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
-            scale: bool = True, align_isotopes: bool = True, 
             char_set: char_sets = "box_drawings_light", **kwargs
         ) -> None:
         """Prints the hierarchical tree structure.
@@ -607,7 +683,32 @@ class Substance(metaclass=ABCMeta):
         """
         self.make_node(
             atomic, weight, volume,
-            scale=scale, align_isotopes=align_isotopes,
+        ).print_tree(char_set=char_set, **kwargs)
+
+    def print_tree2(
+            self, atomic: bool = True, weight: bool = False, *,
+            char_set: char_sets = "box_drawings_light", **kwargs
+        ) -> None:
+        """Prints the hierarchical tree structure.
+        
+        Args:
+            atomic:
+                Get atomic (mole) fraction for each node.
+            weight:
+                Get weight fraction for each node.
+            char_set:
+                Character set that is used to print lines in the tree.
+            **kwargs:
+                Arguments passed to the plotting routine of Node.
+
+        Keyword Args:
+            frac_fmt (str):
+                Format string to be used for fractions.
+            prop_fmt (str):
+                Format string to be used for physical properties.
+        """
+        self.make_node2(
+            atomic, weight,
         ).print_tree(char_set=char_set, **kwargs)
 
 

@@ -5,6 +5,7 @@ Element class serves as constituents for `Molecule`.
 
 from collections import defaultdict
 from typing import Iterable
+import logging
 
 from .substance import Substance
 from .isotope import Isotope
@@ -26,6 +27,8 @@ class Element(Substance):
     @classmethod
     def _get_allowed_constituents(cls):
         return (Isotope,)
+    
+    _RIGHT_ALIGN_PREF = -2  # override
 
     def __init__(self, name: str, composition: dict[Isotope, float], mode: str = "_legacy", natural: bool = False, **kwargs) -> None:
         """Constructor of element.
@@ -172,6 +175,7 @@ class Element(Substance):
 
         id = hash((parent, f_p, self))
         element_list[id] = (self, f_p)
+        logging.debug(f"{parent.name} with {f_p} of {self.name}: {id}")
 
         return element_list
 
