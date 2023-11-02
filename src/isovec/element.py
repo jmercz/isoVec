@@ -3,9 +3,6 @@
 Element class serves as constituents for `Molecule`.
 """
 
-from collections import defaultdict
-from typing import Iterable
-
 from .substance import Substance
 from .isotope import Isotope
 from .isotopes import _natural_compositions
@@ -114,9 +111,12 @@ class Element(Substance):
     # Collection
     # ########
 
-    def surrogate_isotope(self) -> Isotope:
-        """Returns the surrogate isotope for a natural element."""
-        return _natural_compositions[self._Z]
+    def surrogate_isotope(self) -> Isotope | None:
+        """Returns the surrogate isotope for a natural element or None if not natural."""
+        if self._is_natural:
+            return _natural_compositions[self._Z]
+        else:
+            return None
 
     # override
     def _append_elements(self, element_list: dict, by_weight: bool = False, f_p: float = 1.0):

@@ -53,7 +53,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = Ni80Cr20.make_node()
+    res_tree = Ni80Cr20.make_node("composition")
     wtP_Ni = round(res_tree.get_nodes_by_content(nickel)[0].data["x"]*100, 2)
     wtP_Cr = round(res_tree.get_nodes_by_content(chromium)[0].data["x"]*100, 2)
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = Fe7C.make_node()
+    res_tree = Fe7C.make_node("composition")
     wtP_C = round(res_tree.get_nodes_by_content(iso.C_nat)[0].data["x"]*100, 0)
 
     res_table = [
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = Fe25C.make_node(weight=True)
+    res_tree = Fe25C.make_node("composition", weight=True)
     wtP_C = round(res_tree.get_nodes_by_content(iso.C_nat)[0].data["w"]*100, 2)
 
     res_table = [
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = SnPb.make_node()
+    res_tree = SnPb.make_node("composition")
     atP_Sn = round(res_tree.get_nodes_by_content(iso.Sn_nat)[0].data["x"]*100, 2)
     atP_Pb = round(res_tree.get_nodes_by_content(iso.Pb_nat)[0].data["x"]*100, 2)
 
@@ -234,7 +234,7 @@ if __name__ == "__main__":
     }, mode="volume")
 
     # extract results
-    res_tree = mix.make_node(weight=True)
+    res_tree = mix.make_node("input", weight=True)
     wtP_alcohol = round(res_tree.get_nodes_by_content(alcohol)[0].data["w"]*100, 1)
 
     res_table = [
@@ -248,3 +248,44 @@ if __name__ == "__main__":
         print()
         print("--- Mixture calculated by script: ---")
         mix.print_tree(weight=True, volume=True)
+
+
+
+    print()
+    print()
+    print(80*"X")
+    ###################
+    ### Internal composition fetching and conversion
+    ###################
+    desc = r"""
+    test consistency of internal composition fetching
+    and conversion
+    """
+
+    print()
+    print(r"Internal composition fetching and conversion")
+    print(desc)
+
+    carbon_dioxide = iso.Molecule("carbon dioxide", {
+        iso.C_nat: 1,
+        iso.O_nat: 2
+    })
+    methane = iso.Molecule("methane", {
+        iso.C_nat: 1,
+        iso.H_nat: 4
+    })
+    nitrogen2 = iso.Molecule("molecular nitrogen", { iso.N_nat: 2})
+    oxygen2 = iso.Molecule("molecular oxygen", { iso.O_nat: 2})
+    air = iso.Mixture("air", {
+        nitrogen2:                  78.084E-02,  # Molecule
+        oxygen2:        iso.percent(20.946),     # Molecule
+        iso.Ar_nat:     iso.percent( 0.9340),    # Element
+        carbon_dioxide:            417.0E-06,    # Molecule
+        iso.Ne_nat:        iso.ppm( 18.18),      # Element
+        iso.He_nat:        iso.ppm(  5.24),      # Element
+        methane:           iso.ppm(  1.87),      # Molecule
+        iso.Kr_nat:        iso.ppm(  1.14)       # Element
+    })
+    air.print_tree_composition(weight=True)
+    print()
+    air._compare_converted_isotopes()

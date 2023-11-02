@@ -5,7 +5,6 @@ Molecule class serves as constituents for `Mixture`.
 
 from .substance import Substance
 from .element import Element
-from .node import sma_sep
 
 
 class Molecule(Substance):

@@ -8,7 +8,6 @@ from typing import Union, TypeAlias
 from .substance import Substance
 from .element import Element
 from .molecule import Molecule
-from .node import med_sep, big_sep
 
 
 Constituent: TypeAlias = Union["Mixture", Molecule, Element]
