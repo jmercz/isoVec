@@ -75,18 +75,6 @@ class Molecule(Substance):
     def _inp_composition_volume(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
         raise ValueError(f"Input mode 'volume' is disabled for {cls.__name__} creation.")
 
-    # override
-    @classmethod
-    def _inp_composition_legacy(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
-        
-        if not all(frac > 0 for frac in inp_composition.values()):  # either all negative or mixed
-            if all(frac < 0 for frac in inp_composition.values()):  # all negative -> weight fractions given, need to be converted
-                raise ValueError(f"Could not create {cls.__name__}: Giving weight fractions is not allowed for molecules..")
-            else:  # mixed, not allowed
-                raise ValueError(f"Could not create {cls.__name__}: Mixing of atomic and weight fractions is not allowed.")
-        else:  # all positive -> atomic fractions given, no action needed
-            return inp_composition
-
 
     # ########
     # Properties
@@ -131,7 +119,9 @@ class Molecule(Substance):
     # ########
 
     # override
-    def _append_elements(self, element_list: dict[int, tuple[Substance, float]], by_weight: bool = False, f_p: float = 1.0, parent: Substance = None):
+    def _append_elements(self, element_list: dict[int, tuple[Substance, float]], by_weight: bool = False, f_p: float = 1.0):
+
+        element_list[-1] = element_list[-1] + 1  # increase counter
 
         if not by_weight:
             composition = self.get_composition_in_atoms()
@@ -139,43 +129,6 @@ class Molecule(Substance):
             composition = self.get_composition_in_wt()  
         
         for constituent, f_i in composition.items():
-            constituent._append_elements(element_list, by_weight, f_p*f_i, self)
+            constituent._append_elements(element_list, by_weight, f_p*f_i)
 
         return element_list
-
-
-    # ########
-    # Print
-    # ########
-
-    def print_overview(self, scale: bool = False, **kwargs) -> None:
-        """Prints an overview of the molecule.
-
-        Args:
-            scale:
-                Adapts the fractions of sub-components according to the fraction
-                of the parent-component.
-            **kwargs:
-                Internal dictionary to pass information down recursive calls.
-        """
-
-        # get data from kwargs
-        numbering_str = kwargs.get("numbering_str", "")
-        x_p = kwargs.get("x_p", 1.0)
-        w_p = kwargs.get("w_p", 1.0)
-
-        print("{0} Molecule \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
-
-        wt_composition = self.get_composition_in_wt()
-        
-        for i, (element, x_i) in enumerate(self._composition.items(), start = 1):
-            cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_composition[element]
-
-            if scale:
-                x_i = x_p * x_i
-                w_i = w_p * w_i
-            
-            print(sma_sep)
-            element.print_overview(scale, numbering_str=cur_num_str, x_p=x_i, w_p=w_i)

@@ -5,7 +5,6 @@ Element class serves as constituents for `Molecule`.
 
 from collections import defaultdict
 from typing import Iterable
-import logging
 
 from .substance import Substance
 from .isotope import Isotope
@@ -115,67 +114,16 @@ class Element(Substance):
     # Collection
     # ########
 
-    def _append_isotopes(
-            self, dict_list: defaultdict[Isotope, list[float]], 
-            by_weight: bool = False, f_p: float = 1.0, 
-            use_natural: bool | Iterable = False
-        ) -> defaultdict[Isotope, list[float]]:
-        """Appends all isotopes with their desired fraction to given dictionary.
-        
-        The fraction of the element is multiplied onto the fraction of the
-        isotope. Atomic and weight fractions are possible to be fetched.
-        The `use_natural` flag will fetch a surrogate isotope with appropriate
-        mass, if the `Element` is natural.
+    def surrogate_isotope(self) -> Isotope:
+        """Returns the surrogate isotope for a natural element."""
+        return _natural_compositions[self._Z]
 
-        Args:
-            dict_list:
-                Container that collects all isotopes. Gets passed downwards.
-            by_weight:
-                Flag to fetch weight fractions of constituents.
-            f_p:
-                Parent fraction, that is multiplied onto constituent fractions.
-            use_natural:
-                Flag to use fraction of element, if it is natural.
-                Alternatively, a collection of elements can be supplied, that
-                shall be considered.
-        
-        Returns:
-            Dictionary that maps occuring isotopes to list of their fractions
-        """
-        
-        if not by_weight:
-            composition = self._composition
-        else:
-            composition = self.get_composition_in_wt()
-
-        # append isotopes
-        if not self._is_natural or not use_natural:
-            for isotope, f_i in composition.items():
-                dict_list[isotope].append(f_p*f_i)
-            return dict_list
-    
-        if use_natural:
-            if isinstance(use_natural, Iterable):  # have to check if considered
-                if self in use_natural:  # use elemental composition
-                    natural_isotope = _natural_compositions[self._Z]
-                    f_i = sum(composition.values())
-                    dict_list[natural_isotope].append(f_p*f_i)
-                else:
-                    for isotope, f_i in composition.items():
-                        dict_list[isotope].append(f_p*f_i)
-            else:  # must be boolean true, use elemental composition
-                natural_isotope = _natural_compositions[self._Z]
-                f_i = sum(composition.values())
-                dict_list[natural_isotope].append(f_p*f_i)
-
-        return dict_list
-    
     # override
-    def _append_elements(self, element_list: dict, by_weight: bool = False, f_p: float = 1.0, parent: Substance = None):
+    def _append_elements(self, element_list: dict, by_weight: bool = False, f_p: float = 1.0):
 
-        id = hash((parent, f_p, self))
-        element_list[id] = (self, f_p)
-        logging.debug(f"{parent.name} with {f_p} of {self.name}: {id}")
+        element_list[-1] = element_list[-1] + 1  # increase counter
+        element_list[element_list[-1]] = (self, f_p)  # append element
+        element_list[-1] = element_list[-1] + len(self._composition)  # skip numbers of isotopes in element
 
         return element_list
 
@@ -187,45 +135,6 @@ class Element(Substance):
     def element_symbol(self) -> str:
         """Returns the element symbol as a string."""
         return ATOM_NUMB_TO_SYMBOL[self._Z]
-
-
-    # ########
-    # Print
-    # ########
-
-    def print_overview(self, scale: bool = False, **kwargs) -> None:
-        """Prints an overview of the element.
-
-        Args:
-            scale:
-                Adapts the fractions of sub-components according to the fraction
-                of the parent-component.
-            **kwargs:
-                Internal dictionary to pass information down recursive calls.
-        """
-
-        # get data from kwargs
-        numbering_str = kwargs.get("numbering_str", "")
-        x_p = kwargs.get("x_p", 1.0)
-        w_p = kwargs.get("w_p", 1.0)
-
-        print("{0} Element \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
-        print()
-
-        # calculate weight fractions of isotopes
-        wt_composition = self.get_composition_in_wt()
-
-        for i, (isotope, x_i) in enumerate(self._composition.items(), start = 1):
-            cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_composition[isotope]
-
-            if scale:
-                # scale with parent fraction
-                x_i = x_p * x_i
-                w_i = w_p * w_i
-            
-            print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(cur_num_str, isotope._name + ":", x_i*1e2, w_i*1e2))
 
 
     # ########
@@ -264,7 +173,6 @@ class Element(Substance):
 
     def __le__(self, other):
         return self.__lt__(other) or self.__eq__(other)
-
 
     def __gt__(self, other):
         try:

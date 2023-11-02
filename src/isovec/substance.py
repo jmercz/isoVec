@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, TypeAlias, Union, Literal, Iterable
 from abc import ABCMeta, abstractmethod
-import logging
 
 from .constants import N_A
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
@@ -355,8 +354,7 @@ class Substance(metaclass=ABCMeta):
     
     def _append_elements(
             self, element_list: dict[int, tuple[Substance, float]],
-            by_weight: bool = False, f_p: float = 1.0,
-            parent: Substance = None
+            by_weight: bool = False, f_p: float = 1.0
         ) -> dict[int, tuple[Substance, float]]:
         """Collects all contained elements.
         
@@ -370,6 +368,7 @@ class Substance(metaclass=ABCMeta):
         Args:
             element_list:
                 Container that collects all elements. Gets passed downwards.
+                Index "-1" is reserved for counting.
             by_weight:
                 Flag to fetch weight fractions of constituents.
             f_p:
@@ -381,36 +380,34 @@ class Substance(metaclass=ABCMeta):
             Dictionary that maps id to element with its fraction
         """
 
+        element_list[-1] = element_list[-1] + 1  # increase counter
+
         if not by_weight:
             composition = self._composition
         else:
             composition = self.get_composition_in_wt()  
         
         for constituent, f_i in composition.items():
-            constituent._append_elements(element_list, by_weight, f_p*f_i, self)
+            constituent._append_elements(element_list, by_weight, f_p*f_i)
 
         return element_list
     
     def _elemental_composition(
-            self, mode: Literal["atomic", "weight"] = "atomic"
+            self, by_weight: bool = False
         ) -> dict[int, tuple[Substance, float]]:
         """Collects all contained elements with their normalised fraction.
         
         Args:
-            mode:
-                Wether 'atomic' or 'weight' fractions are to be fetched.
+            by_weight:
+                Flag to fetch weight fractions of constituents.
             
         Returns:
             Dictionary that maps id to element with its fraction
         """
 
         # get raw elemental composition
-        if mode in {"atomic", "at", "mole", "mol"}:
-            gathered_elements = self._append_elements(dict(), by_weight=False)
-        elif mode in {"weight", "wt"}:
-            gathered_elements = self._append_elements(dict(), by_weight=True)
-        else:
-            raise ValueError(f"Mode \"{mode}\" not supported for gathering elements.")
+        gathered_elements = self._append_elements({-1: -1}, by_weight)
+        items = gathered_elements.pop(-1)  # remove counter
         
         # get sum for normalisation
         _, fractions = list(map(list, zip(*gathered_elements.values())))
@@ -419,7 +416,7 @@ class Substance(metaclass=ABCMeta):
         return {ident: (element, fraction/norm_tmp) for ident, (element, fraction) in gathered_elements.items()}
 
     def get_elements(self, mode: Literal["atomic", "weight"] = "atomic"):
-        """Returns dict of all contained elements with their summed desired fraction.
+        """Returns dict of all contained elements with their summed fraction.
         
         Args:
             mode:
@@ -429,7 +426,12 @@ class Substance(metaclass=ABCMeta):
             Dictionary that maps occuring elements to their fraction.
         """
 
-        gathered_elements = self._elemental_composition(mode)
+        if mode in {"atomic", "at", "mole", "mol"}:
+            gathered_elements = self._elemental_composition(by_weight=False)
+        elif mode in {"weight", "wt"}:
+            gathered_elements = self._elemental_composition(by_weight=True)
+        else:
+            raise ValueError(f"Mode \"{mode}\" not supported for gathering elements.")
         
         elements = defaultdict(list)
         for element, fraction in gathered_elements.values():
@@ -437,11 +439,57 @@ class Substance(metaclass=ABCMeta):
 
         return {element: sum(fracs) for element, fracs in sorted(elements.items())}
     
+    def _isotopic_composition(
+            self, by_weight: bool = False,
+            use_natural: bool | Iterable = False
+        ) -> dict[int, tuple[Isotope, float]]:
+        """Collects all contained isotopes with their normalised fraction.
+        
+        Args:
+            by_weight:
+                Flag to fetch weight fractions of constituents.
+            
+        Returns:
+            Dictionary that maps id to isotope with its fraction
+        """
+
+        elemental_composition = self._elemental_composition(by_weight)
+        isotopic_composition = {}
+
+        def append_isotopes(id: int, element: Substance, fraction: float):
+            if not by_weight:
+                composition = element._composition
+            else:
+                composition = element.get_composition_in_wt()
+            for j, (isotope, iso_fraction) in enumerate(composition.items(), start=1):
+                isotopic_composition[id+j] = (isotope, fraction*iso_fraction)
+
+        def append_surrogate(id: int, element: Substance, fraction: float):
+            surrogate = element.surrogate_isotope()
+            if surrogate:
+                isotopic_composition[id] = (surrogate, fraction)
+            else:
+                append_isotopes(id, element, fraction)
+
+        for id, (element, fraction) in elemental_composition.items():
+            if use_natural:
+                if isinstance(use_natural, Iterable):  # have to check if considered
+                    if element in use_natural:
+                        append_surrogate(id, element, fraction)
+                    else:
+                        append_isotopes(id, element, fraction)
+                else:  # must be boolean true, use elemental composition
+                    append_surrogate(id, element, fraction)
+            else:
+                append_isotopes(id, element, fraction)
+
+        return isotopic_composition
+    
     def get_isotopes(
             self, mode: Literal["atomic", "weight"] = "atomic", 
             use_natural: bool | Iterable = False
         ) -> dict[Isotope, float]:
-        """Returns dict of all contained isotopes with their summed desired fraction.
+        """Returns dict of all contained isotopes with their summed fraction.
         
         Args:
             mode:
@@ -455,18 +503,18 @@ class Substance(metaclass=ABCMeta):
             Dictionary that maps occuring isotopes to their fraction.
         """
         
-        elements = self.get_elements(mode)
-
-        if mode in {"weight", "wt"}:
-            by_weight =  True
+        if mode in {"atomic", "at", "mole", "mol"}:
+            gathered_isotopes = self._isotopic_composition(by_weight=False, use_natural=use_natural)
+        elif mode in {"weight", "wt"}:
+            gathered_isotopes = self._isotopic_composition(by_weight=True, use_natural=use_natural)
         else:
-            by_weight =  False
+            raise ValueError(f"Mode \"{mode}\" not supported for gathering isotopes.")
 
-        gathered_isotopes = defaultdict(list)
-        for element, fraction in elements.items():
-            element._append_isotopes(gathered_isotopes, by_weight, fraction, use_natural)
-        
-        return {isotope: sum(fracs) for isotope, fracs in sorted(gathered_isotopes.items())}
+        isotopes = defaultdict(list)
+        for isotope, fraction in gathered_isotopes.values():
+            isotopes[isotope].append(fraction)
+
+        return {isotope: sum(fracs) for isotope, fracs in sorted(isotopes.items())}
 
         
     # ########
@@ -489,7 +537,8 @@ class Substance(metaclass=ABCMeta):
     # ########        
 
     def make_node(
-            self, atomic: bool = True, weight: bool = False, volume: bool = False
+            self, tree_mode: Literal["input", "composition"],
+            atomic: bool = True, weight: bool = False, volume: bool = False
         ) -> Node:
         """Creates a hierarchical node structure with instance as the root.
         
@@ -505,8 +554,9 @@ class Substance(metaclass=ABCMeta):
             Node structure with instance as root.
         """
 
-        def add_constituents(parent_node: Node):
+        def add_constituents_input(parent_node: Node):
 
+            nonlocal node_i
             substance: Substance = parent_node.content
             constituents = list(substance.composition.keys())
 
@@ -527,6 +577,8 @@ class Substance(metaclass=ABCMeta):
 
             for i, constituent in enumerate(constituents):
                 
+                node_i += 1
+
                 # create data dictionary
                 constituent_data = {}
                 if atomic:
@@ -544,77 +596,35 @@ class Substance(metaclass=ABCMeta):
                     pass
 
                 # create node of constituent
-                node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data)
+                node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data, id=node_i)
 
                 # create child node for constituents of constituent (if applicable)
                 if isinstance(constituent, Isotope):
                     continue
                 else:
-                    add_constituents(parent_node=node)
+                    add_constituents_input(parent_node=node)
+            
+        def add_constituents_composition(parent_node: Node):
 
-        # create data dictionary
-        root_data = {}
-        if self._M:
-            root_data["M"] = self._M
-        if self._rho:
-            root_data["rho"] = self._rho
-
-        # create root node and start recursive hierarchy construction
-        root = Node(label=str(self), content=self, data=root_data)
-        add_constituents(parent_node=root)
-
-        return root
-    
-    def make_node2(
-            self, atomic: bool = True, weight: bool = False
-        ) -> Node:
-        """Creates a hierarchical node structure with instance as the root.
-        
-        Args:
-            atomic:
-                Get atomic (mole) fraction for each node.
-            weight:
-                Get weight fraction for each node.
-            volume:
-                Get volume fraction for each node.
-        
-        Returns:
-            Node structure with instance as root.
-        """
-
-        def add_constituents(parent_node: Node):
-
+            nonlocal node_i
             substance: Substance = parent_node.content
             constituents = list(substance.composition.keys())
 
-            # decide for fraction to be used
-            if atomic:
-                at_fracs = list(substance._composition.values())
-            if weight:
-                try:
-                    wt_fracs = list(substance.get_composition_in_wt().values())
-                except ValueError as ex:  # constituent has no molar mass
-                    wt_fracs = None
-
             for i, constituent in enumerate(constituents):
+
+                node_i += 1
                 
                 # create data dictionary
                 constituent_data = {}
                 if atomic:
                     try:
-                        id = hash((substance, at_fracs[i], constituent))
-                        constituent_data["x"] = elemental_atomic[id][1]
-                        logging.debug(f"found {substance.name} with {at_fracs[i]} of {constituent.name} in atomic dict")
+                        constituent_data["x"] = composition_atomic[node_i][1]
                     except KeyError:
-                        logging.debug(f"DIDN'T found {substance.name} with {at_fracs[i]} of {constituent.name} in atomic dict")
                         pass
-                if weight and wt_fracs:
+                if weight:
                     try:
-                        id = hash((substance, wt_fracs[i], constituent))
-                        constituent_data["w"] = elemental_weight[id][1]
-                        logging.debug(f"found {substance.name} with {wt_fracs[i]} of {constituent.name} in weight dict")
+                        constituent_data["w"] = composition_weight[node_i][1]
                     except KeyError:
-                        logging.debug(f"DIDN'T found {substance.name} with {wt_fracs[i]} of {constituent.name} in weight dict")
                         pass
                 if constituent.M:
                     constituent_data["M"] = constituent.M
@@ -625,14 +635,14 @@ class Substance(metaclass=ABCMeta):
                     pass
 
                 # create node of constituent
-                node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data)
-
+                node = Node(label=str(constituent), content=constituent, parent=parent_node, data=constituent_data, id=node_i)
+ 
                 # create child node for constituents of constituent (if applicable)
                 if isinstance(constituent, Isotope):
                     node.align_right(level=-1, label_size=6)
                 else:
                     node.align_right(level=constituent._RIGHT_ALIGN_PREF)
-                    add_constituents(parent_node=node)
+                    add_constituents_composition(parent_node=node)
 
         # create data dictionary
         root_data = {}
@@ -641,18 +651,30 @@ class Substance(metaclass=ABCMeta):
         if self._rho:
             root_data["rho"] = self._rho
 
-        logging.debug("create dict in atomic mode")
-        elemental_atomic = self._elemental_composition(mode="atomic") if atomic else None
-        logging.debug("create dict in weight mode")
-        elemental_weight = self._elemental_composition(mode="weight") if weight else None
-
         # create root node and start recursive hierarchy construction
-        root = Node(label=str(self), content=self, data=root_data)
-        add_constituents(parent_node=root)
+        node_i = 0
+        root = Node(label=str(self), content=self, data=root_data, id=node_i)
+        if tree_mode == "input":
+            add_constituents_input(parent_node=root)
+        elif tree_mode == "composition":
+            # atomic composition
+            if atomic:
+                composition_atomic = self._elemental_composition(by_weight=False)
+                composition_atomic.update(self._isotopic_composition(by_weight=False))
+            else:
+                composition_atomic = None
+            # weight composition
+            if weight:
+                composition_weight = self._elemental_composition(by_weight=True)
+                composition_weight.update(self._isotopic_composition(by_weight=True))
+            else:
+                composition_weight = None
+            # recursive hierarchy construction
+            add_constituents_composition(parent_node=root)
 
         return root
-
-    def print_tree(
+    
+    def print_tree_input(
             self, atomic: bool = True, weight: bool = False, volume: bool = False, *,
             char_set: char_sets = "box_drawings_light", **kwargs
         ) -> None:
@@ -665,11 +687,6 @@ class Substance(metaclass=ABCMeta):
                 Get weight fraction for each node.
             volume:
                 Get volume fraction for each node.
-            scale:
-                Flag to scale each constituents fraction by its parent fraction.
-                If scaled, the composition of each parent adds up to unity.
-            align_isotopes:
-                Flag to align all isotopes in one column.
             char_set:
                 Character set that is used to print lines in the tree.
             **kwargs:
@@ -682,10 +699,10 @@ class Substance(metaclass=ABCMeta):
                 Format string to be used for physical properties.
         """
         self.make_node(
-            atomic, weight, volume,
+            "input", atomic, weight, volume,
         ).print_tree(char_set=char_set, **kwargs)
 
-    def print_tree2(
+    def print_tree_composition(
             self, atomic: bool = True, weight: bool = False, *,
             char_set: char_sets = "box_drawings_light", **kwargs
         ) -> None:
@@ -707,8 +724,8 @@ class Substance(metaclass=ABCMeta):
             prop_fmt (str):
                 Format string to be used for physical properties.
         """
-        self.make_node2(
-            atomic, weight,
+        self.make_node(
+            "composition", atomic, weight,
         ).print_tree(char_set=char_set, **kwargs)
 
 

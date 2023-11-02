@@ -1,18 +1,12 @@
 
 from collections import defaultdict
 import numpy as np
-import logging
 
 from src import isovec as iso
 
 # TODO: copy function
 # TODO (far): IAEA Livechart Data Download API class
 
-# TODO: nicht hashen sondern nummerieren
-# TODO: isotopic composition 
-# TODO: tree alignment fixen (größer als parent)
-
-logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.DEBUG, filemode='w',)
 
 SiC = iso.Molecule("SiC molecule", {
     iso.Si_nat: 1,
@@ -38,13 +32,16 @@ matrix_mixture = iso.Mixture("matrix", {
     iso.U_nat: 0.5
 }, mode=mixture_mode)
 
-#matrix_molecule.print_tree(weight=True, volume=True)
+matrix_molecule.print_tree_input(weight=True, volume=True)
 print()
-matrix_molecule.print_tree2(weight=True)
+matrix_molecule.print_tree_composition(weight=True)
 print()
 
-tmp_mol = matrix_molecule.get_elements(mode="atomic")
-tmp_mix = matrix_mixture.get_elements(mode="atomic")
+elem_mol = matrix_molecule.get_elements(mode="atomic")
+iso_mol = matrix_molecule.get_isotopes(mode="atomic", use_natural=(iso.C_nat,))
+
+elem_mol = matrix_molecule._elemental_composition(by_weight=False)
+iso_mol = matrix_molecule._isotopic_composition(by_weight=False, use_natural=(iso.C_nat,))
 
 
 a = matrix_molecule._compare_converted_isotopes()
