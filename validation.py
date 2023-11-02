@@ -8,7 +8,7 @@ from src import isovec as iso
 
 if __name__ == "__main__":
 
-    print_raw_output = False  # print raw output of script calculations
+    print_raw_output = True  # print raw output of script calculations
 
     # tabulate options
     headers = ["", "expected result", "script result", "deviation"]  # header row for table
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = Ni80Cr20.make_node("composition")
+    res_tree = Ni80Cr20.make_node("input")
     wtP_Ni = round(res_tree.get_nodes_by_content(nickel)[0].data["x"]*100, 2)
     wtP_Cr = round(res_tree.get_nodes_by_content(chromium)[0].data["x"]*100, 2)
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         print(30*"#")
         print()
         print("--- Alloy calculated by script: ---")
-        Ni80Cr20.print_overview(True)
+        Ni80Cr20.print_tree_input(weight=True)
 
 
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = Fe7C.make_node("composition")
+    res_tree = Fe7C.make_node("input")
     wtP_C = round(res_tree.get_nodes_by_content(iso.C_nat)[0].data["x"]*100, 0)
 
     res_table = [
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         print(30*"#")
         print()
         print("--- Alloy calculated by script: ---")
-        Fe7C.print_overview(True)
+        Fe7C.print_tree_input(weight=True)
 
 
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     })
 
     # extract results
-    res_tree = Fe25C.make_node("composition", weight=True)
+    res_tree = Fe25C.make_node("input", weight=True)
     wtP_C = round(res_tree.get_nodes_by_content(iso.C_nat)[0].data["w"]*100, 2)
 
     res_table = [
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         print(30*"#")
         print()
         print("--- Alloy calculated by script: ---")
-        Fe25C.print_overview(True)
+        Fe25C.print_tree_input(weight=True)
 
 
 
@@ -173,13 +173,13 @@ if __name__ == "__main__":
         iso.Sn_nat: -m_tin/m_tot,
         iso.Pb_nat: -m_lead/m_tot
     })
-    SnPb2 = iso.Mixture("Sn(98)Pb(65)_direct", {
+    SnPb_dir = iso.Mixture("Sn(98)Pb(65)_direct", {
         iso.Sn_nat: -98,
         iso.Pb_nat: -65
     })
 
     # extract results
-    res_tree = SnPb.make_node("composition")
+    res_tree = SnPb.make_node("input")
     atP_Sn = round(res_tree.get_nodes_by_content(iso.Sn_nat)[0].data["x"]*100, 2)
     atP_Pb = round(res_tree.get_nodes_by_content(iso.Pb_nat)[0].data["x"]*100, 2)
 
@@ -194,11 +194,11 @@ if __name__ == "__main__":
         print(30*"#")
         print()
         print("--- Alloy calculated by script: ---")
-        SnPb.print_overview(True)
+        SnPb.print_tree_input(weight=True)
 
         print()
         print("--- Alloy calculated by script with masses entered directly (shows normalisation): ---")
-        SnPb2.print_overview(True)
+        SnPb_dir.print_tree_input(weight=True)
 
 
 
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         print(30*"#")
         print()
         print("--- Mixture calculated by script: ---")
-        mix.print_tree(weight=True, volume=True)
+        mix.print_tree_input(weight=True, volume=True)
 
 
 
@@ -258,8 +258,7 @@ if __name__ == "__main__":
     ### Internal composition fetching and conversion
     ###################
     desc = r"""
-    test consistency of internal composition fetching
-    and conversion
+    test consistency of internal composition fetching and conversion
     """
 
     print()
@@ -286,6 +285,160 @@ if __name__ == "__main__":
         methane:           iso.ppm(  1.87),      # Molecule
         iso.Kr_nat:        iso.ppm(  1.14)       # Element
     })
-    air.print_tree_composition(weight=True)
-    print()
     air._compare_converted_isotopes()
+
+
+
+    print()
+    print()
+    print(80*"X")
+    ###################
+    ### Detailed air composition
+    ###################
+    desc = r"""
+    test conversion from atomic to weight percent for air
+    as in https://de.wikipedia.org/wiki/Luft#Zusammensetzung
+    """
+
+    print()
+    print(r"Detailed air composition")
+    print(desc)
+
+    N2 = iso.Molecule("molecular nitrogen", {iso.N_nat: 2})
+    O2 = iso.Molecule("molecular oxygen",   {iso.O_nat: 2})
+    H2 = iso.Molecule("molecular hydrogen", {iso.H_nat: 2})
+    CO2 = iso.Molecule("carbon dioxide", {
+        iso.C_nat:  1,
+        iso.O_nat:  2
+    }, symbol="CO2")
+    CH4 = iso.Molecule("methane", {
+        iso.C_nat:  1,
+        iso.H_nat:  4
+    }, symbol="CH4")
+    N2O = iso.Molecule("dinitrogen oxide", {
+        iso.N_nat:  2,
+        iso.O_nat:  1
+    }, symbol="N2O")
+    CO = iso.Molecule("carbon monoxide", {
+        iso.C_nat:  1,
+        iso.O_nat:  1
+    }, symbol="CO")
+    CCl2F2 = iso.Molecule("dichlorodifluoromethane", {
+        iso.C_nat:  1,
+        iso.Cl_nat: 2,
+        iso.F_nat:  2
+    }, symbol="CCl2F2")
+    CCl3F = iso.Molecule("trichlorofluoromethane", {
+        iso.C_nat:  1,
+        iso.Cl_nat: 3,
+        iso.F_nat:  1
+    }, symbol="CCl3F")
+    CHClF2 = iso.Molecule("chlorodifluoromethane", {
+        iso.C_nat:  1,
+        iso.H_nat:  1,
+        iso.Cl_nat: 1,
+        iso.F_nat:  2
+    }, symbol="CHClF2")
+    CCl4 = iso.Molecule("tetrachloromethane", {
+        iso.C_nat:  1,
+        iso.Cl_nat: 4,
+    }, symbol="CCl4")
+    CClF2CCl2F = iso.Molecule("1,1,2-trichloro-1,2,2-trifluoroethane", {
+        iso.C_nat:  2,
+        iso.Cl_nat: 3,
+        iso.F_nat:  3,
+    }, symbol="CClF2CCl2F")
+    C2H3Cl2F = iso.Molecule("1,1-dichloro-1-fluoroethane", {
+        iso.C_nat:  2,
+        iso.H_nat:  3,
+        iso.Cl_nat: 2,
+        iso.F_nat:  1,
+    }, symbol="C2H3Cl2F")
+    C2H3ClF2 = iso.Molecule("1-chloro-1,1-difluoroethane", {
+        iso.C_nat:  2,
+        iso.H_nat:  3,
+        iso.Cl_nat: 1,
+        iso.F_nat:  2,
+    }, symbol="C2H3ClF2")
+    SF6 = iso.Molecule("sulphur hexafluoride", {
+        iso.S_nat:  1,
+        iso.F_nat:  6,
+    }, symbol="SF6")
+    CBrClF2 = iso.Molecule("bromochlorodifluoromethane", {
+        iso.C_nat:  1,
+        iso.Br_nat: 1,
+        iso.Cl_nat: 1,
+        iso.F_nat:  2,
+    }, symbol="CBrClF2")
+    CBrF3 = iso.Molecule("bromotrifluoromethane", {
+        iso.C_nat:  1,
+        iso.Br_nat: 1,
+        iso.F_nat:  3,
+    }, symbol="CBrF3")
+
+    air = iso.Mixture("dry air", {
+        # main components
+        N2:         iso.percent(78.084),
+        O2:         iso.percent(20.942),
+        iso.Ar_nat: iso.percent( 0.934),
+        # trace gases
+        CO2:        iso.ppm(400.0),
+        iso.Ne_nat: iso.ppm( 18.18),
+        iso.He_nat: iso.ppm(  5.24),
+        CH4:        iso.ppm(  1.85),
+        iso.Kr_nat: iso.ppm(  1.14),
+
+        H2:         iso.ppb(500.0),
+        N2O:        iso.ppb(328.0),
+        CO:         iso.ppb(175.0),
+        iso.Xe_nat: iso.ppb( 87.0),
+
+        CCl2F2:     iso.ppt(520.0),
+        CCl3F:      iso.ppt(234.0),
+        CHClF2:     iso.ppt(253.0),
+        CCl4:       iso.ppt( 81.0),
+        CClF2CCl2F: iso.ppt( 71.0),
+        C2H3Cl2F:   iso.ppt( 26.0),
+        C2H3ClF2:   iso.ppt( 23.0),
+        SF6:        iso.ppt(  8.0),
+        CBrClF2:    iso.ppt(  4.0),
+        CBrF3:      iso.ppt(  3.4),
+    }, mode="atomic")
+
+    # extract results
+    res_tree = air.make_node("input", weight=True)
+    res_table = [
+        compare("N2 [wt.%]", 75.518, round(res_tree.get_nodes_by_content(N2)[0].data["w"]*1e2, 3)),
+        compare("O2 [wt.%]", 23.135, round(res_tree.get_nodes_by_content(O2)[0].data["w"]*1e2, 3)),
+        compare("Ar [wt.%]",  1.288, round(res_tree.get_nodes_by_content(iso.Ar_nat)[0].data["w"]*1e2, 3)),
+        [],
+        compare("CO2 [wt.ppm]",  590, round(res_tree.get_nodes_by_content(CO2)[0].data["w"]*1e6, 0)),
+        compare("Ne [wt.ppm]",    12.67, round(res_tree.get_nodes_by_content(iso.Ne_nat)[0].data["w"]*1e6, 2)),
+        compare("He [wt.ppm]",     0.72, round(res_tree.get_nodes_by_content(iso.He_nat)[0].data["w"]*1e6, 2)),
+        compare("CH4 [wt.ppm]",    0.97, round(res_tree.get_nodes_by_content(CH4)[0].data["w"]*1e6, 2)),
+        compare("Kr [wt.ppm]",     3.30, round(res_tree.get_nodes_by_content(iso.Kr_nat)[0].data["w"]*1e6, 2)),
+        [],
+        compare("H2 [wt.ppb]",    36, round(res_tree.get_nodes_by_content(H2)[0].data["w"]*1e9, 0)),
+        compare("N2O [wt.ppb]",  480, round(res_tree.get_nodes_by_content(N2O)[0].data["w"]*1e9, 0)),
+        compare("CO [wt.ppb]",   175, round(res_tree.get_nodes_by_content(CO)[0].data["w"]*1e9, 0)),
+        compare("Xe [wt.ppb]",   400, round(res_tree.get_nodes_by_content(iso.Xe_nat)[0].data["w"]*1e9, 0)),
+        [],
+        compare("CCl2F2 [wt.ppt]",    2200, round(res_tree.get_nodes_by_content(CCl2F2)[0].data["w"]*1e12, 0)),
+        compare("CCl3F [wt.ppt]",     1100, round(res_tree.get_nodes_by_content(CCl3F)[0].data["w"]*1e12, 0)),
+        compare("CHClF2 [wt.ppt]",     480, round(res_tree.get_nodes_by_content(CHClF2)[0].data["w"]*1e12, 0)),
+        compare("CCl4 [wt.ppt]",       510, round(res_tree.get_nodes_by_content(CCl4)[0].data["w"]*1e12, 0)),
+        compare("CClF2CCl2F [wt.ppt]", 520, round(res_tree.get_nodes_by_content(CClF2CCl2F)[0].data["w"]*1e12, 0)),
+        compare("C2H3Cl2F [wt.ppt]",    70, round(res_tree.get_nodes_by_content(C2H3Cl2F)[0].data["w"]*1e12, 0)),
+        compare("C2H3ClF2 [wt.ppt]",    50, round(res_tree.get_nodes_by_content(C2H3ClF2)[0].data["w"]*1e12, 0)),
+        compare("SF6 [wt.ppt]",         25, round(res_tree.get_nodes_by_content(SF6)[0].data["w"]*1e12, 0)),
+        compare("CBrClF2 [wt.ppt]",     25, round(res_tree.get_nodes_by_content(CBrClF2)[0].data["w"]*1e12, 0)),
+        compare("CBrF3 [wt.ppt]",       13, round(res_tree.get_nodes_by_content(CBrF3)[0].data["w"]*1e12, 0)),
+    ]
+    print(tabulate(res_table, headers=headers, **table_kwargs))
+    print()
+
+    if print_raw_output:
+        print(30*"#")
+        print()
+        print("--- Mixture calculated by script: ---")
+        air.print_tree_input(weight=True)
