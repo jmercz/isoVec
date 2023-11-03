@@ -3,6 +3,12 @@
 
 ## Version 1.2.0 (03/11/2023)
 
+- fixed typos in "README.md"
+
+
+
+## Version 1.2.0 (03/11/2023)
+
 This update features a major overhaul of the routines to fetch isotopic (and elemental) compositions.
 Atomic fractions of `Molecule`s in `Mixture`s cannot be passed down directly.
 This would underestimate the atomic fraction of the `Element`s of that `Molecule`.

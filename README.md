@@ -169,7 +169,7 @@ The format of the fraction values and the physical properties can be given by su
 
 ### Elemental & Isotopic Composition
 
-To obtain the elemental, the method `get_elements()` can be called upon a substance, yielding an ordered dictionary with elements and their respective fractions.
+To obtain the elemental composition, the method `get_elements()` can be called upon a substance, yielding an ordered dictionary with elements and their respective summed fractions.
 With the `mode` keyword argument, fractions can be fetched in terms of `"atomic"` or `"weight"`.
 For the mixture of air, the following code
 
@@ -227,7 +227,7 @@ Both `atomic` and `weight` fractions can be fetched and are limited to `Element`
 The following code
 
 ```python
-air.print_tree_input(weight=True)
+air.print_tree_composition(weight=True)
 ```
 
 yields the composition tree:
