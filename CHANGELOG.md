@@ -1,7 +1,7 @@
 
 # Changelog
 
-## Version 1.2.0 (03/11/2023)
+## Version 1.2.0.1 (03/11/2023)
 
 - fixed typos in "README.md"
 
