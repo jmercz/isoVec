@@ -1,7 +1,7 @@
 
 # Changelog
 
-## Version 1.2.0 (xx/11/2023)
+## Version 1.2.0 (03/11/2023)
 
 This update features a major overhaul of the routines to fetch isotopic (and elemental) compositions.
 Atomic fractions of `Molecule`s in `Mixture`s cannot be passed down directly.
@@ -36,6 +36,8 @@ To show the actual (scaled) elemental and isotopic composition, `print_tree_comp
 	- new prefix generation in `print_node()` of `Node` class
 	- right-alignment-preference class variable for `Substance`
 	- `Element`s and `Isotope`s are respectively right aligned in `print_tree_composition()`
+- added internal conversion consistency case to "validation.py"
+- added detailed air case to "validation.py"
 
 
 

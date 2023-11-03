@@ -285,7 +285,15 @@ if __name__ == "__main__":
         methane:           iso.ppm(  1.87),      # Molecule
         iso.Kr_nat:        iso.ppm(  1.14)       # Element
     })
-    air._compare_converted_isotopes()
+    differences = air._compare_converted_isotopes()
+
+    print()
+    dif_at = differences["at"]
+    i_max_dif_at = dif_at.index(max(dif_at, key=abs))
+    print(f"Maximum atomic difference: {dif_at[i_max_dif_at]} (" + str(differences["rel_at"][i_max_dif_at]) + ")")
+    dif_wt = differences["wt"]
+    i_max_dif_wt = dif_wt.index(max(dif_wt, key=abs))
+    print(f"Maximum weight difference: {dif_wt[i_max_dif_wt]} (" + str(differences["rel_wt"][i_max_dif_wt]) + ")")
 
 
 
