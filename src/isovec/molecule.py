@@ -5,7 +5,6 @@ Molecule class serves as constituents for `Mixture`.
 
 from .substance import Substance
 from .element import Element
-from .node import sma_sep
 
 
 class Molecule(Substance):
@@ -61,7 +60,7 @@ class Molecule(Substance):
         # construct symbol
         if not self._symbol:
             sym = ""
-            for element, atoms in self.get_constituent_in_atoms().items():
+            for element, atoms in self.get_composition_in_atoms().items():
                 sym += f"{element.element_symbol()}"
                 if atoms > 1:
                     sym += f"{atoms:.2g}"
@@ -76,18 +75,6 @@ class Molecule(Substance):
     @classmethod
     def _inp_composition_volume(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
         raise ValueError(f"Input mode 'volume' is disabled for {cls.__name__} creation.")
-
-    # override
-    @classmethod
-    def _inp_composition_legacy(cls, inp_composition: dict[Element, float]) -> dict[Element, float]:
-        
-        if not all(frac > 0 for frac in inp_composition.values()):  # either all negative or mixed
-            if all(frac < 0 for frac in inp_composition.values()):  # all negative -> weight fractions given, need to be converted
-                raise ValueError(f"Could not create {cls.__name__}: Giving weight fractions is not allowed for molecules..")
-            else:  # mixed, not allowed
-                raise ValueError(f"Could not create {cls.__name__}: Mixing of atomic and weight fractions is not allowed.")
-        else:  # all positive -> atomic fractions given, no action needed
-            return inp_composition
 
 
     # ########
@@ -119,7 +106,7 @@ class Molecule(Substance):
         Will return zero if calculation is not possible.
         """
         if all(constituent.M > 0 for constituent in self._composition.keys()):
-            return sum(N_i*constituent.M for constituent, N_i in self.get_constituent_in_atoms().items())
+            return sum(N_i*constituent.M for constituent, N_i in self.get_composition_in_atoms().items())
         else:
             return 0.0
 
@@ -128,57 +115,26 @@ class Molecule(Substance):
     # Conversion
     # ########
 
-    def get_constituent_in_atoms(self) -> dict[Element, float]:
+    def get_composition_in_atoms(self) -> dict[Element, float]:
         """Returns constituents with their number of atoms."""
         return {element: int(x_i*self._atoms) for element, x_i in self._composition.items()}
 
 
     # ########
-    # Tree
+    # Collection
     # ########
 
-    def _get_data_dict(self) -> dict:
-        """Dictionary with data of molecule."""
+    # override
+    def _append_elements(self, element_list: dict[int, tuple[Substance, float]], by_weight: bool = False, f_p: float = 1.0):
 
-        data = super()._get_data_dict()
-        if self._M_mol:
-            data["M_mol"] = self._M_mol
+        element_list[-1] = element_list[-1] + 1  # increase counter
 
-        return data
-
-
-    # ########
-    # Print
-    # ########
-
-    def print_overview(self, scale: bool = False, **kwargs) -> None:
-        """Prints an overview of the molecule.
-
-        Args:
-            scale:
-                Adapts the fractions of sub-components according to the fraction
-                of the parent-component.
-            **kwargs:
-                Internal dictionary to pass information down recursive calls.
-        """
-
-        # get data from kwargs
-        numbering_str = kwargs.get("numbering_str", "")
-        x_p = kwargs.get("x_p", 1.0)
-        w_p = kwargs.get("w_p", 1.0)
-
-        print("{0} Molecule \"{1}\": {2:.4f} g/mol ({3:.4f} g/mol)".format(numbering_str, self._name, self._M, self._M_mol))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
-
-        wt_composition = self.get_composition_in_wt()
+        if not by_weight:
+            composition = self.get_composition_in_atoms()
+        else:
+            composition = self.get_composition_in_wt()  
         
-        for i, (element, x_i) in enumerate(self._composition.items(), start = 1):
-            cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_composition[element]
+        for constituent, f_i in composition.items():
+            constituent._append_elements(element_list, by_weight, f_p*f_i)
 
-            if scale:
-                x_i = x_p * x_i
-                w_i = w_p * w_i
-            
-            print(sma_sep)
-            element.print_overview(scale, numbering_str=cur_num_str, x_p=x_i, w_p=w_i)
+        return element_list

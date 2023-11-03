@@ -29,12 +29,12 @@ class TreeCharSet:
     @property
     def inter(self) -> str:
         """'Intersection' string for nodes that have further siblings."""
-        return self.c_int + 2*self.c_hor + " "
+        return self.c_int + 3*self.c_hor
     
     @property
     def last(self) -> str:
         """'Last' string for nodes that have no further siblings (are the last child)."""
-        return self.c_ang + 2*self.c_hor + " "
+        return self.c_ang + 3*self.c_hor
     
     @property
     def fill(self) -> str:
@@ -107,7 +107,7 @@ class Node:
         else:
             self._data = {}
 
-        self._right_align = False
+        self._right_align = None
 
         if id is None:
             self._id = self._nodes
@@ -188,17 +188,22 @@ class Node:
         """Adds key-value (str-float) pair to data of node."""
         self._data[key] = value
 
-    def align_right(self, value: bool = True, label_size: int = -1) -> None:
-        """Set alignment of node to right (max depth).
+    def align_right(self, level: int = -1, label_size: int = -1) -> None:
+        """Set right alignment of node.
+
+        Numbering of level is similar to list indexing. Positive values are
+        absolute positions, negative values are relative to the end (max depth),
+        e.g. "-1" is the maximum depth, "-2" the one before, etc. The aligment
+        will still be at least the depth of the node.
         
         Args:
-            value:
-                Wheter node shall be right aligned.
+            level:
+                Level of alignment.
             label_size:
                 Fix size of node label, for better alignment.
         """
 
-        self._right_align = value
+        self._right_align = level
         if label_size > 0:
             self._label = f"{self._label:>{label_size}}"
 
@@ -274,6 +279,26 @@ class Node:
     # Print
     # ########
 
+    def _print_depth(self, max_depth: int) -> int:
+        """Return level, whre node shall be printed.
+        
+        Args:
+            max_depth:
+                Maximum depth in tree.
+
+        Returns:
+            Level, where node shall be printed.
+        """
+
+        if self._right_align is None:
+            return self._depth
+        else:
+            if self._right_align > 0:
+                return max(self._depth, self._right_align)
+            elif self._right_align < 0:
+                return max(self._depth, max_depth+(self._right_align+1))
+
+
     def print_tree(
             self, char_set: char_sets = "box_drawings_light", *, 
             frac_fmt: str = "8.4f", prop_fmt: str = ".4f"
@@ -292,13 +317,32 @@ class Node:
         def print_node(node: Node):
 
             # construct prefix string
-            pre = ""
-            if node.depth > 0:
-                for last in last_ones[:node.depth-1]:
-                    pre += tcs.empty if last else tcs.vert
-                pre += tcs.last if last_ones[node.depth-1] else tcs.inter
-            if node._right_align:  # align at max depth
-                pre = pre.rstrip() + (max_depth-node.depth)*tcs.fill + " "
+            pre = []
+            if node._depth > 0:
+                depth_parent = node._parent._print_depth(max_depth)
+
+                # iterate over last_ones arry for structure
+                for last in last_ones[:node._depth-1]:
+                    if last == True:
+                        pre.append(tcs.empty)
+                    else:
+                        pre.append(tcs.vert)
+                if last_ones[node._depth-1] == True:
+                    pre.append(tcs.last)
+                else:
+                    pre.append(tcs.inter)
+
+                # empty buffers in front, when parent was already moved
+                while len(pre) <= depth_parent:
+                    pre.insert(-1, tcs.empty)
+
+                # fill buffers at end, to reach right alignment
+                while len(pre) < node._print_depth(max_depth):
+                    pre.append(tcs.fill)
+
+            pre = "".join(pre)[:-1]
+            if pre:
+                pre = pre + " "
 
             # construct data string
             data_str = []
@@ -374,8 +418,3 @@ class Node:
             yield child
             yield from child.__iter__()
         
-
-
-big_sep = "{0:64}".format("_" * 64)
-med_sep = "{0:64}".format("-" * 64)
-sma_sep = "{0:64}".format("- " * 32)

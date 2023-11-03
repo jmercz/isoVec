@@ -8,7 +8,6 @@ from typing import Union, TypeAlias
 from .substance import Substance
 from .element import Element
 from .molecule import Molecule
-from .node import med_sep, big_sep
 
 
 Constituent: TypeAlias = Union["Mixture", Molecule, Element]
@@ -87,50 +86,3 @@ class Mixture(Substance):
             return summed**-1
         else:
             return 0.0
-
-
-    # ########
-    # Print
-    # ########
-
-    def print_overview(self, scale: bool = False, **kwargs) -> None:
-        """Prints an overview of the mixture.
-
-        Args:
-            scale:
-                Adapts the fractions of sub-components according to the fraction
-                of the parent-component.
-            **kwargs:
-                Internal dictionary to pass information down recursive calls.
-        """
-
-        # get data from kwargs
-        numbering_str = kwargs.get("numbering_str", "")
-        x_p = kwargs.get("x_p", 1.0)
-        w_p = kwargs.get("w_p", 1.0)
-        
-        print()
-        print(big_sep)
-        print()
-        #print("{0} Mixture \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._atomic_wt))
-        print("{0} Mixture \"{1}\"".format(numbering_str, self._name))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
-        print()
-
-        wt_composition = self.get_composition_in_wt()
-
-        for i, (constituent, x_i) in enumerate(self._composition.items(), start = 1):
-            cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_composition[constituent]
-
-            if scale:
-                x_i = x_p * x_i
-                w_i = w_p * w_i
-            
-            print(med_sep)
-            constituent.print_overview(scale, numbering_str=cur_num_str, x_p=x_i, w_p=w_i)
-
-        print(med_sep)
-        print()
-        print(big_sep)
-        

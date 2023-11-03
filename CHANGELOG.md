@@ -1,6 +1,46 @@
 
 # Changelog
 
+## Version 1.2.0 (03/11/2023)
+
+This update features a major overhaul of the routines to fetch isotopic (and elemental) compositions.
+Atomic fractions of `Molecule`s in `Mixture`s cannot be passed down directly.
+This would underestimate the atomic fraction of the `Element`s of that `Molecule`.
+Instead, all `Element`s have to be collected according to their actual atomic abundance and subsequently be normalised.
+When the composition input mode was `weight` and the isotopic composition was fetched in `weight` as well, values were **correct** (because of back and forth conversion).
+Update 1.1.1 was ment to adress the faulty isotopic composition, when fetched in ´atomic´ mode, but introduced other errors and is thus discouraged to be used.
+The respective releases on PyPI therefore have been yanked.
+This new approach also required changes to the tree-printing routine.
+`print_tree()` has been replaced by `print_tree_input()`, that acts like the old `print_tree(scale=False)`.
+To show the actual (scaled) elemental and isotopic composition, `print_tree_composition()` has to be used.
+
+- added `get_elements()` method to `Substance` for elemental composition of that `Substance`
+	- keyword `mode` for either "atomic" or "weight" fractions
+- added option for `get_isotopes()` to supply explicit collection of (natural) elements to be considered
+	- removed the internal method `_append_isotopes()`
+	- instead uses `_isotopic_composition()`, `_elemental_composition()` and `_append_elements()` to get correct (atomic) composition
+		- `_isotopic_composition()`, `_elemental_composition()` return a dictionary, matching the position in the tree hierarchy to the `Isotope` or `Element` and their fraction respectively
+- added `surrogate_isotope()` method to `Element` to get a surrogate `Isotope` object in case of a natural element (used for `use_natural` algorithm)
+- removed `print_overview()` from `Mixture`, `Molecule` and `Element`, because it doesn't comply with the new approach and has been superseded by tree-printing
+- `Node`s in the tree use their position in the tree-hierarchy as their id
+- replaced `print_tree()` with
+	- `print_tree_input()`
+		- shows input composition in selected fraction modes (`atomic`, `weight` and `volume`)
+		- similar to old `print_tree(scale=False)`
+	- `print_tree_composition()`
+		- shows scaled composition of `Element`s and `Isotopes`s of a `Substance`
+		- possible fraction modes: `atomic` and `weight`
+		- uses `Node` id to fetch the correct composition value from `_isotopic_composition()` or `_elemental_composition()` dictionary
+- added more sophisticated right alignment options for tree-plotting
+	- added `_print_depth()` method for `Node` class, to get desired level of printing that `Node` object
+	- new prefix generation in `print_node()` of `Node` class
+	- right-alignment-preference class variable for `Substance`
+	- `Element`s and `Isotope`s are respectively right aligned in `print_tree_composition()`
+- added internal conversion consistency case to "validation.py"
+- added detailed air case to "validation.py"
+
+
+
 ## Version 1.1.1.1 (16/10/2023)
 
 - fixed problem with tree plotting of molecules, that lead to wrong atomic isotope vectors
@@ -8,6 +48,7 @@
 	- added molar mass of molecule (is calculated as before)
 	- added `_get_data_dict()` to `Substance` (and `Molecule`) for more flexibility in tree plotting
 - added option for `get_isotopes()` to supply explicit collection of (natural) elements to be considered
+
 
 ## Version 1.1.1 (16/10/2023)
 

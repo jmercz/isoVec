@@ -3,9 +3,6 @@
 Element class serves as constituents for `Molecule`.
 """
 
-from collections import defaultdict
-from typing import Iterable
-
 from .substance import Substance
 from .isotope import Isotope
 from .isotopes import _natural_compositions
@@ -26,6 +23,8 @@ class Element(Substance):
     @classmethod
     def _get_allowed_constituents(cls):
         return (Isotope,)
+    
+    _RIGHT_ALIGN_PREF = -2  # override
 
     def __init__(self, name: str, composition: dict[Isotope, float], mode: str = "_legacy", natural: bool = False, **kwargs) -> None:
         """Constructor of element.
@@ -109,42 +108,24 @@ class Element(Substance):
 
 
     # ########
-    # Isotope Collection
+    # Collection
     # ########
 
-    # override
-    def _append_isotopes(
-            self, dict_list: defaultdict[Isotope, list[float]], 
-            by_weight: bool = False, f_p: float = 1.0, 
-            use_natural: bool | Iterable = False
-        ) -> defaultdict[Isotope, list[float]]:
-        
-        if not by_weight:
-            composition = self._composition
+    def surrogate_isotope(self) -> Isotope | None:
+        """Returns the surrogate isotope for a natural element or None if not natural."""
+        if self._is_natural:
+            return _natural_compositions[self._Z]
         else:
-            composition = self.get_composition_in_wt()
+            return None
 
-        # append isotopes
-        if not self._is_natural or not use_natural:
-            for isotope, f_i in composition.items():
-                dict_list[isotope].append(f_p*f_i)
-            return dict_list
-    
-        if use_natural:
-            if isinstance(use_natural, Iterable):  # have to check if considered
-                if self in use_natural:  # use elemental composition
-                    natural_isotope = _natural_compositions[self._Z]
-                    f_i = sum(composition.values())
-                    dict_list[natural_isotope].append(f_p*f_i)
-                else:
-                    for isotope, f_i in composition.items():
-                        dict_list[isotope].append(f_p*f_i)
-            else:  # must be boolean true, use elemental composition
-                natural_isotope = _natural_compositions[self._Z]
-                f_i = sum(composition.values())
-                dict_list[natural_isotope].append(f_p*f_i)
+    # override
+    def _append_elements(self, element_list: dict, by_weight: bool = False, f_p: float = 1.0):
 
-        return dict_list
+        element_list[-1] = element_list[-1] + 1  # increase counter
+        element_list[element_list[-1]] = (self, f_p)  # append element
+        element_list[-1] = element_list[-1] + len(self._composition)  # skip numbers of isotopes in element
+
+        return element_list
 
 
     # ########
@@ -157,39 +138,55 @@ class Element(Substance):
 
 
     # ########
-    # Print
+    # Operators
     # ########
+    
+    def __hash__(self):
+        #return hash((self.__class__, self._name))
+        return hash((self.__class__, self._Z, self._M))
 
-    def print_overview(self, scale: bool = False, **kwargs) -> None:
-        """Prints an overview of the element.
+    def __eq__(self, other):
+        try:
+            if (self._Z == other._Z) and (self._M == other._M):
+                return True
+            else:
+                return False
+        except:
+            return NotImplemented
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
-        Args:
-            scale:
-                Adapts the fractions of sub-components according to the fraction
-                of the parent-component.
-            **kwargs:
-                Internal dictionary to pass information down recursive calls.
-        """
+    def __lt__(self, other):
+        try:
+            if self._Z < other._Z:
+                return True
+            elif self._Z == other._Z:
+                if self._M < other._M:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except:
+            return NotImplemented
 
-        # get data from kwargs
-        numbering_str = kwargs.get("numbering_str", "")
-        x_p = kwargs.get("x_p", 1.0)
-        w_p = kwargs.get("w_p", 1.0)
+    def __le__(self, other):
+        return self.__lt__(other) or self.__eq__(other)
 
-        print("{0} Element \"{1}\": {2:.4f} g/mol".format(numbering_str, self._name, self._M))
-        print("{0}  {1:8.4f} at.%  |  {2:8.4f} wt.%".format(" "*len(numbering_str), x_p*1e2, w_p*1e2))
-        print()
+    def __gt__(self, other):
+        try:
+            if self._Z > other._Z:
+                return True
+            elif self._Z == other._Z:
+                if self._M > other._M:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except:
+            return NotImplemented
 
-        # calculate weight fractions of isotopes
-        wt_composition = self.get_composition_in_wt()
-
-        for i, (isotope, x_i) in enumerate(self._composition.items(), start = 1):
-            cur_num_str = numbering_str + str(i) + "."  # list indention string
-            w_i = wt_composition[isotope]
-
-            if scale:
-                # scale with parent fraction
-                x_i = x_p * x_i
-                w_i = w_p * w_i
-            
-            print("{0:<9} {1:<7} {2:8.4f} at.%  |  {3:8.4f} wt.%".format(cur_num_str, isotope._name + ":", x_i*1e2, w_i*1e2))
+    def __ge__(self, other):
+        return self.__gt__(other) or self.__eq__(other)
