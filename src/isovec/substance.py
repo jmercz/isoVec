@@ -75,7 +75,7 @@ class Substance(metaclass=ABCMeta):
 
         self._name = name                             # name of the substance
         self._composition: dict[Constituent, float]   # {constituent: atomic (mole) fraction}
-        self._M: float                                # average molar mass [g mol^-1]
+        self._M: float                                # molar mass [g mol^-1]
         self._rho: float                              # density [g cm^-3]
         self._symbol: str                             # symbol of the substance
 
@@ -255,7 +255,7 @@ class Substance(metaclass=ABCMeta):
 
     @property
     def M(self):
-        """Average molar mass [g mol^-1]."""
+        """Molar mass [g mol^-1]."""
         return self._M
     
     @property
@@ -388,10 +388,103 @@ class Substance(metaclass=ABCMeta):
             composition = self.get_composition_in_wt()  
         
         for constituent, f_i in composition.items():
-            constituent._append_isotopes(dict_list, by_weight, f_p*f_i, use_natural)
+            constituent._append_elements(element_list, by_weight, f_p*f_i)
 
-        return dict_list
- 
+        return element_list
+    
+    def _elemental_composition(
+            self, by_weight: bool = False
+        ) -> dict[int, tuple[Substance, float]]:
+        """Collects all contained elements with their normalised fraction.
+        
+        Args:
+            by_weight:
+                Flag to fetch weight fractions of constituents.
+            
+        Returns:
+            Dictionary that maps id to element with its fraction
+        """
+
+        # get raw elemental composition
+        gathered_elements = self._append_elements({-1: -1}, by_weight)
+        items = gathered_elements.pop(-1)  # remove counter
+        
+        # get sum for normalisation
+        _, fractions = list(map(list, zip(*gathered_elements.values())))
+        norm_tmp = sum(fractions)
+        
+        return {ident: (element, fraction/norm_tmp) for ident, (element, fraction) in gathered_elements.items()}
+
+    def get_elements(self, mode: Literal["atomic", "weight"] = "atomic"):
+        """Returns dict of all contained elements with their summed fraction.
+        
+        Args:
+            mode:
+                Wether 'atomic' or 'weight' fractions are to be fetched.
+        
+        Returns:
+            Dictionary that maps occuring elements to their fraction.
+        """
+
+        if mode in {"atomic", "at", "mole", "mol"}:
+            gathered_elements = self._elemental_composition(by_weight=False)
+        elif mode in {"weight", "wt"}:
+            gathered_elements = self._elemental_composition(by_weight=True)
+        else:
+            raise ValueError(f"Mode \"{mode}\" not supported for gathering elements.")
+        
+        elements = defaultdict(list)
+        for element, fraction in gathered_elements.values():
+            elements[element].append(fraction)
+
+        return {element: sum(fracs) for element, fracs in sorted(elements.items())}
+    
+    def _isotopic_composition(
+            self, by_weight: bool = False,
+            use_natural: bool | Iterable = False
+        ) -> dict[int, tuple[Isotope, float]]:
+        """Collects all contained isotopes with their normalised fraction.
+        
+        Args:
+            by_weight:
+                Flag to fetch weight fractions of constituents.
+            
+        Returns:
+            Dictionary that maps id to isotope with its fraction
+        """
+
+        elemental_composition = self._elemental_composition(by_weight)
+        isotopic_composition = {}
+
+        def append_isotopes(id: int, element: Substance, fraction: float):
+            if not by_weight:
+                composition = element._composition
+            else:
+                composition = element.get_composition_in_wt()
+            for j, (isotope, iso_fraction) in enumerate(composition.items(), start=1):
+                isotopic_composition[id+j] = (isotope, fraction*iso_fraction)
+
+        def append_surrogate(id: int, element: Substance, fraction: float):
+            surrogate = element.surrogate_isotope()
+            if surrogate:
+                isotopic_composition[id] = (surrogate, fraction)
+            else:
+                append_isotopes(id, element, fraction)
+
+        for id, (element, fraction) in elemental_composition.items():
+            if use_natural:
+                if isinstance(use_natural, Iterable):  # have to check if considered
+                    if element in use_natural:
+                        append_surrogate(id, element, fraction)
+                    else:
+                        append_isotopes(id, element, fraction)
+                else:  # must be boolean true, use elemental composition
+                    append_surrogate(id, element, fraction)
+            else:
+                append_isotopes(id, element, fraction)
+
+        return isotopic_composition
+    
     def get_isotopes(
             self, mode: Literal["atomic", "weight"] = "atomic", 
             use_natural: bool | Iterable = False
@@ -535,12 +628,6 @@ class Substance(metaclass=ABCMeta):
                         pass
                 if constituent.M:
                     constituent_data["M"] = constituent.M
-                    try:
-                        if constituent.M_mol:
-                            constituent_data["M_mol"] = constituent.M_mol
-                    except AttributeError as ex:
-                        pass
-
                 try:
                     if constituent.rho:
                         constituent_data["rho"] = constituent.rho
@@ -558,7 +645,11 @@ class Substance(metaclass=ABCMeta):
                     add_constituents_composition(parent_node=node)
 
         # create data dictionary
-        root_data = self._get_data_dict()
+        root_data = {}
+        if self._M:
+            root_data["M"] = self._M
+        if self._rho:
+            root_data["rho"] = self._rho
 
         # create root node and start recursive hierarchy construction
         node_i = 0
