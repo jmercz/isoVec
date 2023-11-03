@@ -349,17 +349,13 @@ class Node:
             for key, value in node.data.items():
                 if key == "x":
                     data_str.append(f"{value*1e2:{frac_fmt}} at.%")
-                elif key == "w":
+                if key == "w":
                     data_str.append(f"{value*1e2:{frac_fmt}} wt.%")
-                elif key == "phi":
+                if key == "phi":
                     data_str.append(f"{value*1e2:{frac_fmt}} vol.%")
-                elif key == "M":
-                    tmp = f"{value:{prop_fmt}} g/mol"
-                    if "M_mol" in node.data:
-                        value2 = node.data["M_mol"]
-                        tmp += f" ({value2:{prop_fmt}} g/mol)"
-                    data_str.append(tmp)
-                elif key == "rho":
+                if key == "M":
+                    data_str.append(f"{value:{prop_fmt}} g/mol")
+                if key == "rho":
                     data_str.append(f"{value:{prop_fmt}} g/cm^3")
             data_str =  "  |  ".join(data_str)
 
