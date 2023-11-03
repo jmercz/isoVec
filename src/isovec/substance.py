@@ -783,26 +783,26 @@ class Substance(metaclass=ABCMeta):
         differences = defaultdict(list)
 
         # print for atomic percent
-        print(f"Isotope |   direct at.%  | converted at.%  |  difference at.% (relative difference)")
+        print(f"Isotope |   direct atomic  | converted atomic | difference atomic (relative difference)")
         for i, isotope in enumerate(iso_with_at):
             dir = direct_at[i]
             conv = conv_at[i]
             dif = dir - conv
             dif_rel = dif / dir
-            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            print(f"{isotope.name:>7} |  {dir:14.12f}  |  {conv:14.12f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
             differences["at"].append(dif)
             differences["rel_at"].append(dif_rel)
 
         print()
 
         # print for weight percent
-        print(f"Isotope |   direct wt.%  | converted wt.%  |  difference wt.% (relative difference)")
+        print(f"Isotope |   direct weight  | converted weight | difference weight (relative difference)")
         for i, isotope in enumerate(iso_with_wt):
             dir = direct_wt[i]
             conv = conv_wt[i]
             dif = dir - conv
             dif_rel = dif / dir
-            print(f"{isotope.name:>7} |  {dir:12.10f}  |  {conv: 12.10f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
+            print(f"{isotope.name:>7} |  {dir:14.12f}  |  {conv:14.12f}  |  {dif: 12.9e} ({dif_rel: 12.9e})")
             differences["wt"].append(dif)
             differences["rel_wt"].append(dif_rel)
         
