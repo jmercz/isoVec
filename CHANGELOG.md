@@ -1,6 +1,18 @@
 
 # Changelog
 
+## Version 1.2.1 (xx/11/2023)
+
+- added `copy()` function to `Substance`
+	- deep-copy of the substance
+	- keyword arguments to change properties are:
+		- `name` for the descriptive name
+		- `symbol` for the symbol
+		- `rho` for density
+		- `M` for molar mass
+
+
+
 ## Version 1.2.0.1 (03/11/2023)
 
 - fixed typos in "README.md"

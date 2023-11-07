@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, TypeAlias, Union, Literal, Iterable
 from abc import ABCMeta, abstractmethod
+import copy
 
 from .constants import N_A
 from .conversion import at_to_wt, wt_to_at, vol_to_at, at_to_vol
@@ -237,6 +238,40 @@ class Substance(metaclass=ABCMeta):
             Substance instance.
         """
         return cls(name, composition, mode="volume", **kwargs)
+    
+
+    def copy(self, name: str = None, M: float = None, rho: float = None, symbol: str = None) -> Substance:
+        """Copy substance and edit properties.
+        
+        It is not possible to edit the composition. To do so, create a new
+        substance.
+
+        Args:
+            name:
+                Descriptive name.
+            M:
+                Molar mass.
+            rho:
+                Density.
+            symbol:
+                Short symbol.
+        
+        Returns:
+            Copied substance instance.
+        """
+
+        new = copy.deepcopy(self)
+
+        if name:
+            new._name = name
+        if M:
+            new._M = M
+        if rho:
+            new._rho = rho
+        if symbol:
+            new._symbol = symbol
+
+        return new
 
 
     # ########
