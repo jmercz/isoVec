@@ -81,6 +81,8 @@ Instead, each fraction is normalised by the total sum of given fractions.
 The molar mass of an element is calculated automatically, but could be overwritten when supplying the keyword argument `M=value` in the constructor.
 Optionally, the density of the element can be supplied with the keyword argument `rho=value`, since densities of elements cannot be calculated automatically by the given informations.
 The described behaviour of the constructur also applies to the following classes, if not stated otherwise.
+Furthermore, instances of `Element`s and the following classes can be (deep)copied by calling the `copy()` method on the instance.
+Properties like density `rho`, molar mass `M`, `name` and `symbol` can be altered from the original, by supplying these as keyword arguments.
 
 
 ### Molecule

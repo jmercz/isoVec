@@ -12,7 +12,7 @@ exclude = []
 
 [project]
 name = "isovec"
-version = "1.2.1b1"
+version = "1.2.1"
 authors = [
     { name="Julius Mercz", email="julius.mercz@tum.de" }
 ]

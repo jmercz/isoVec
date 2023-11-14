@@ -1,7 +1,7 @@
 
 # Changelog
 
-## Version 1.2.1 (xx/11/2023)
+## Version 1.2.1 (14/11/2023)
 
 - added `copy()` function to `Substance`
 	- deep-copy of the substance
